@@ -94,7 +94,13 @@ switch ($action) {
             $d->name = $name;
             $d->ip_address = $ip_address;
             $d->username = $username;
-            $d->password = $password;
+            // SECURITY FIX: Encrypt router password before storing
+            try {
+                $d->password = Crypto::encrypt($password);
+            } catch (Exception $e) {
+                _log("CRITICAL: Failed to encrypt router password - " . $e->getMessage(), 'System', $admin['id']);
+                r2(getUrl('routers/add'), 'e', 'Failed to encrypt password. Please contact administrator.');
+            }
             $d->description = $description;
             $d->enabled = $enabled;
             $d->save();
@@ -166,7 +172,15 @@ switch ($action) {
             $d->name = $name;
             $d->ip_address = $ip_address;
             $d->username = $username;
-            $d->password = $password;
+            // SECURITY FIX: Encrypt router password before storing (only if password changed)
+            if (!empty($password)) {
+                try {
+                    $d->password = Crypto::encrypt($password);
+                } catch (Exception $e) {
+                    _log("CRITICAL: Failed to encrypt router password - " . $e->getMessage(), 'System', $admin['id']);
+                    r2(getUrl('routers/edit/' . $id), 'e', 'Failed to encrypt password. Please contact administrator.');
+                }
+            }
             $d->description = $description;
             $d->coordinates = $coordinates;
             $d->coverage = $coverage;

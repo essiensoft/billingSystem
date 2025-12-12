@@ -85,9 +85,10 @@ if ($handler == '') {
     $handler = 'default';
 }
 try {
-    if (!empty($_GET['uid'])) {
-        $_COOKIE['uid'] = $_GET['uid'];
-    }
+    // SECURITY FIX: Removed session fixation vulnerability
+    // Session IDs should NEVER be accepted from URL parameters
+    // Original vulnerable code removed: if (!empty($_GET['uid'])) { $_COOKIE['uid'] = $_GET['uid']; }
+    
     $admin = Admin::_info();
     $sys_render = $root_path . File::pathFixer('system/controllers/' . $handler . '.php');
     if (file_exists($sys_render)) {

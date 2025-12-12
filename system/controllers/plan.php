@@ -1039,13 +1039,26 @@ switch ($action) {
         }
         break;
     case 'extend':
+        // SECURITY FIX: Add admin permission check to prevent IDOR
+        if (!in_array($admin['user_type'], ['SuperAdmin', 'Admin'])) {
+            _alert(Lang::T('You do not have permission to access this page'), 'danger', "dashboard");
+        }
+        
         $id = $routes[2];
         $days = $routes[3];
-        $svoucher = $_GET['svoucher'];
+        $svoucher = _req('svoucher'); // Use _req instead of $_GET
+        
         if (App::getVoucherValue($svoucher)) {
             r2(getUrl('plan'), 's', "Extend already done");
         }
+        
         $tur = ORM::for_table('tbl_user_recharges')->find_one($id);
+        
+        // SECURITY FIX: Verify record exists before accessing
+        if (!$tur) {
+            r2(getUrl('plan'), 'e', "Plan not found");
+        }
+        
         $status = $tur['status'];
         if ($status == 'off') {
             if (strtotime($tur['expiration'] . ' ' . $tur['time']) > time()) {

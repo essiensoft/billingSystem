@@ -138,7 +138,11 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
         r2(getUrl('voucher/invoice/'));
         die();
     }
-    $bill = ORM::for_table('tbl_user_recharges')->where('id', $_GET['recharge'])->where('username', $user['username'])->findOne();
+    // SECURITY FIX: Use customer_id instead of username for stronger access control
+    $bill = ORM::for_table('tbl_user_recharges')
+        ->where('id', $_GET['recharge'])
+        ->where('customer_id', $user['id'])
+        ->findOne();
     if ($bill) {
         if ($bill['routers'] == 'radius') {
             $router = 'radius';
@@ -147,6 +151,14 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
             $router = $routers['id'];
         }
         r2(getUrl("order/gateway/$router/$bill[plan_id]"));
+    } else {
+        // SECURITY FIX: Log unauthorized access attempt
+        SecurityHelper::logSecurityEvent(
+            "Unauthorized recharge access attempt: recharge_id=" . $_GET['recharge'],
+            'high',
+            ['user_id' => $user['id'], 'username' => $user['username']]
+        );
+        r2(getUrl('home'), 'e', 'Unauthorized access');
     }
 } else if (!empty(_get('extend'))) {
     if ($user['status'] != 'Active') {
@@ -209,7 +221,11 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
         r2(getUrl('home'), 'e', "Plan Not Found or Not Active");
     }
 } else if (isset($_GET['deactivate']) && !empty($_GET['deactivate'])) {
-    $bill = ORM::for_table('tbl_user_recharges')->where('id', $_GET['deactivate'])->where('username', $user['username'])->findOne();
+    // SECURITY FIX: Use customer_id instead of username for stronger access control
+    $bill = ORM::for_table('tbl_user_recharges')
+        ->where('id', $_GET['deactivate'])
+        ->where('customer_id', $user['id'])
+        ->findOne();
     if ($bill) {
         $p = ORM::for_table('tbl_plans')->where('id', $bill['plan_id'])->find_one();
         $dvc = Package::getDevice($p);
@@ -229,7 +245,13 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
         Message::sendTelegram('User u' . $bill['username'] . ' Deactivate ' . $bill['namebp']);
         r2(getUrl('home'), 's', 'Success deactivate ' . $bill['namebp']);
     } else {
-        r2(getUrl('home'), 'e', 'No Active Plan');
+        // SECURITY FIX: Log unauthorized access attempt
+        SecurityHelper::logSecurityEvent(
+            "Unauthorized deactivate access attempt: recharge_id=" . $_GET['deactivate'],
+            'high',
+            ['user_id' => $user['id'], 'username' => $user['username']]
+        );
+        r2(getUrl('home'), 'e', 'Unauthorized access');
     }
 }
 
