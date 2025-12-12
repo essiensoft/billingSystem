@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>{Lang::T('Login')} - {$_c['CompanyName']}</title>
+    <link rel="shortcut icon" href="{$app_url}/ui/ui/images/logo.png" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+    {literal}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Desktop Layout - Split Screen Design */
+        .login-container {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* Left Side - Illustration & Announcement (Desktop Only) */
+        .left-section {
+            flex: 0 0 60%;
+            background: linear-gradient(135deg, #C9A86A 0%, #D4B896 50%, #E8AA42 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            color: white;
+            overflow: hidden;
+        }
+
+        .left-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .logo-section {
+            position: absolute;
+            top: 40px;
+            left: 60px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #C9A86A;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .logo img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .company-name-header {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tagline {
+            position: absolute;
+            top: 120px;
+            left: 60px;
+            max-width: 400px;
+            z-index: 10;
+        }
+
+        .tagline h2 {
+            font-size: 32px;
+            font-weight: 400;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .illustration {
+            position: relative;
+            z-index: 5;
+            max-width: 550px;
+            width: 100%;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .illustration svg {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+        }
+
+        /* WiFi Animation */
+        @keyframes wifiPulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes phoneGlow {
+            0%, 100% { filter: drop-shadow(0 10px 30px rgba(100,180,220,0.3)); }
+            50% { filter: drop-shadow(0 15px 40px rgba(100,180,220,0.5)); }
+        }
+
+        .illustration img {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.1));
+        }
+
+        /* Announcement Card (Desktop Only) */
+        .announcement-card {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .announcement-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: white;
+        }
+
+        .announcement-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .announcement-content p {
+            margin: 0 0 10px 0;
+        }
+
+        /* Right Side - Form (Desktop) */
+        .right-section {
+            flex: 0 0 40%;
+            background: #F8F9FA;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            position: relative;
+        }
+
+        .language-selector {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6B7280;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .language-selector:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .welcome-title {
+            font-size: 36px;
+            font-weight: 600;
+            color: #D4915D;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* Mobile-Only Elements */
+        .mobile-header {
+            display: none;
+        }
+
+        .mobile-wave-pattern {
+            display: none;
+        }
+
+        .remember-me-group {
+            display: none;
+        }
+
+        .announcement-btn {
+            display: none;
+        }
+
+        .mobile-logo {
+            display: none;
+        }
+
+        /* Announcement Modal Styles */
+        .announcement-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .announcement-modal.show {
+            display: flex;
+        }
+
+        .announcement-modal-content {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            max-height: 70vh;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.3s ease;
+        }
+
+        .announcement-modal-header {
+            background: linear-gradient(135deg, #E8AA42, #C9A86A);
+            color: white;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .announcement-modal-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .announcement-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .announcement-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .announcement-modal-close svg {
+            width: 20px;
+            height: 20px;
+            stroke: white;
+        }
+
+        .announcement-modal-body {
+            padding: 24px;
+            max-height: 50vh;
+            overflow-y: auto;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        .announcement-modal-body h4 {
+            color: #1F2937;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .announcement-modal-body p {
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-danger {
+            background: #FEE2E2;
+            border: 1px solid #FCA5A5;
+            color: #991B1B;
+        }
+
+        .alert-success {
+            background: #D1FAE5;
+            border: 1px solid #6EE7B7;
+            color: #065F46;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #E8AA42;
+            display: none;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 15px;
+            color: #1F2937;
+            background: white;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: #C9A86A;
+            box-shadow: 0 0 0 3px rgba(201, 168, 106, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #9CA3AF;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #9CA3AF;
+            user-select: none;
+        }
+
+        .btn-group-justified {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #C9A86A 0%, #E8AA42 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(201, 168, 106, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(201, 168, 106, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4F46E5 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-link {
+            color: #C9A86A;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .btn-link:hover {
+            color: #D4915D;
+            text-decoration: underline;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .footer-links {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #E5E7EB;
+            text-align: center;
+        }
+
+        .footer-links a {
+            color: #6B7280;
+            text-decoration: none;
+            font-size: 13px;
+            margin: 0 8px;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #C9A86A;
+        }
+
+        .signup-link {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .signup-link a {
+            color: #E8AA42;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-dialog {
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header .close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #6B7280;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-body {
+            padding: 24px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #E5E7EB;
+            text-align: right;
+        }
+
+        /* ============================================
+           MOBILE RESPONSIVE DESIGN (768px and below)
+           ============================================ */
+        @media (max-width: 768px) {
+            /* Hide desktop split-screen elements */
+            .left-section {
+                display: none !important;
+            }
+
+            .language-selector {
+                display: none !important;
+            }
+
+            /* Mobile Container - Single Screen with Wave Pattern */
+            .login-container {
+                flex-direction: column;
+                background: linear-gradient(180deg, #F5E6D3 0%, #EDD9BC 100%);
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* Show Mobile Wave Pattern */
+            .mobile-wave-pattern {
+                display: block;
+                position: absolute;
+                left: -50px;
+                top: 0;
+                bottom: 0;
+                width: 400px;
+                z-index: 1;
+                pointer-events: none;
+            }
+
+            .mobile-wave-pattern svg {
+                height: 100%;
+            }
+
+            /* Mobile Header with Hamburger Menu */
+            .mobile-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px;
+                position: relative;
+                z-index: 10;
+            }
+
+            .announcement-btn {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                background: rgba(232, 170, 66, 0.2);
+                border: 1px solid #E8AA42;
+                padding: 8px 16px;
+                border-radius: 20px;
+                cursor: pointer;
+                transition: all 0.3s;
+            }
+
+            .announcement-btn:hover {
+                background: rgba(232, 170, 66, 0.3);
+            }
+
+            .announcement-btn svg {
+                width: 20px;
+                height: 20px;
+                color: #E8AA42;
+            }
+
+            .announcement-btn span {
+                font-size: 13px;
+                font-weight: 600;
+                color: #1F2937;
+            }
+
+            .hamburger-menu {
+                width: 30px;
+                height: 24px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                cursor: pointer;
+            }
+
+            .hamburger-menu span {
+                display: block;
+                width: 100%;
+                height: 3px;
+                background: #1F2937;
+                border-radius: 2px;
+            }
+
+            /* Mobile Logo Section */
+            .mobile-logo {
+                display: block;
+                text-align: center;
+                padding: 20px;
+                position: relative;
+                z-index: 10;
+            }
+
+            .mobile-logo .logo {
+                width: 80px;
+                height: 80px;
+                background: white;
+                border-radius: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 12px;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+                font-size: 40px;
+                color: #C9A86A;
+            }
+
+            .mobile-logo .logo img {
+                max-width: 90%;
+                max-height: 90%;
+                object-fit: contain;
+            }
+
+            .mobile-logo .company-name-header {
+                font-size: 20px;
+                font-weight: 700;
+                color: #1F2937;
+                text-shadow: none;
+            }
+
+            /* Right Section becomes full-width centered */
+            .right-section {
+                flex: 1;
+                background: transparent;
+                padding: 40px 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                z-index: 5;
+            }
+
+            .form-container {
+                max-width: 100%;
+                width: 100%;
+            }
+
+            /* Mobile Title Styling */
+            .welcome-title {
+                font-size: 48px;
+                font-weight: 900;
+                color: #000000;
+                margin-bottom: 40px;
+                text-align: left;
+            }
+
+            /* Show Input Icons on Mobile */
+            .input-icon {
+                display: block;
+            }
+
+            .form-input {
+                padding-left: 48px;
+                border: none;
+                border-bottom: 2px solid #E8AA42;
+                border-radius: 0;
+                background: transparent;
+                font-size: 16px;
+            }
+
+            .form-input::placeholder {
+                color: #E8AA42;
+                font-weight: 500;
+            }
+
+            .form-input:focus {
+                border-bottom-color: #C9A86A;
+                box-shadow: none;
+            }
+
+            .form-label {
+                display: none;
+            }
+
+            /* Show Remember Me and Forgot Password Row */
+            .remember-me-group {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 30px;
+                font-size: 14px;
+            }
+
+            .remember-me-group label {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: #374151;
+                cursor: pointer;
+            }
+
+            .remember-me-group input[type="checkbox"] {
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+                accent-color: #E8AA42;
+            }
+
+            .remember-me-group a {
+                color: #000000;
+                text-decoration: none;
+                font-weight: 500;
+            }
+
+            /* Mobile Button Styling */
+            .btn-group-justified {
+                grid-template-columns: 1fr;
+                gap: 0;
+                margin-bottom: 24px;
+            }
+
+            .btn-primary {
+                background: #E8AA42;
+                color: #000000;
+                font-size: 18px;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                padding: 16px;
+                border-radius: 12px;
+                box-shadow: none;
+            }
+
+            .btn-primary:hover {
+                transform: none;
+                background: #D4915D;
+            }
+
+            .btn-success {
+                display: none;
+            }
+
+            /* Mobile Sign Up Link */
+            .signup-link {
+                font-size: 15px;
+                color: #374151;
+            }
+
+            .signup-link a {
+                color: #E8AA42;
+            }
+
+            /* Hide desktop footer links on mobile */
+            .footer-links {
+                border: none;
+                padding-top: 0;
+                margin-top: 30px;
+            }
+
+            /* Password Toggle */
+            .password-toggle {
+                color: #000000;
+            }
+        }
+
+        /* Tablet Adjustments (769px - 1024px) */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .left-section {
+                flex: 0 0 50%;
+            }
+
+            .right-section {
+                flex: 0 0 50%;
+            }
+
+            .illustration {
+                max-width: 400px;
+            }
+        }
+
+        /* Small Mobile (480px and below) */
+        @media (max-width: 480px) {
+            .mobile-header {
+                padding: 15px;
+            }
+
+            .right-section {
+                padding: 30px 20px;
+            }
+
+            .welcome-title {
+                font-size: 40px;
+            }
+
+            .illustration {
+                max-width: 320px;
+                margin-top: 10px;
+            }
+        }
+
+            .mobile-wave-pattern {
+                width: 300px;
+            }
+        }
+    {/literal}
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <!-- Mobile Wave Pattern (Mobile Only) -->
+        <div class="mobile-wave-pattern">
+            <svg viewBox="0 0 400 800" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                <path d="M0 0 Q 200 100 0 200 T 0 400 Q 200 500 0 600 T 0 800 L 0 0 Z" fill="url(#waveGradient)" opacity="0.8"/>
+                <path d="M0 50 Q 180 130 0 250 T 0 450 Q 180 530 0 650 T 0 800 L 0 50 Z" fill="url(#waveGradient)" opacity="0.6"/>
+                <defs>
+                    <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#E8AA42;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#C9A86A;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- Mobile Header with Hamburger Menu (Mobile Only) -->
+        <div class="mobile-header">
+            <div class="announcement-btn" onclick="showAnnouncementModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span>Announcements</span>
+            </div>
+            <div class="hamburger-menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <!-- Mobile Logo Section (Mobile Only) -->
+        <div class="mobile-logo">
+            <div class="logo">
+                <img src="{$app_url}/ui/ui/images/logo.png" alt="{$_c['CompanyName']}" onerror="this.parentElement.innerHTML='<div style=\'font-size:40px;color:#C9A86A;font-weight:700\'>{$_c['CompanyName'][0]|upper}</div>'">
+            </div>
+            <div class="company-name-header">{$_c['CompanyName']}</div>
+        </div>
+
+        <!-- Left Section - Illustration & Announcement (Desktop Only) -->
+        <div class="left-section">
+            <div class="logo-section">
+                <div class="logo">
+                    <img src="{$app_url}/ui/ui/images/logo.png" alt="{$_c['CompanyName']}" onerror="this.parentElement.innerHTML='<div style=\'font-size:24px;color:#C9A86A;font-weight:700\'>{$_c['CompanyName'][0]|upper}</div>'">
+                </div>
+                <div class="company-name-header">{$_c['CompanyName']}</div>
+            </div>
+            <div class="tagline">
+                <h2>Explore UI Designs, Graphics, and Custom Illustrations here.</h2>
+            </div>
+            <div class="illustration">
+                <img src="{$app_url}/ui/ui/images/" alt="WiFi Hotspot Login" onerror="this.style.display='none'" />
+                <!-- Fallback SVG if image not found -->
+                <svg viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:none;">
+                    <defs>
+                        <!-- Gradients -->
+                        <linearGradient id="wifiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#6BB6FF;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#3D8BFD;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="phoneGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#5BA3F5;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#3D7FCF;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="buttonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#FFB84D;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#FFA726;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="personGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FF9CEE;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#E77DD9;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="personGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFD666;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#FFC233;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="personGradient3" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFE699;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#FFD95C;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="personGradient4" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#7FE8D9;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#5CD4C3;stop-opacity:1" />
+                        </linearGradient>
+
+                        <!-- Filters for depth -->
+                        <filter id="shadow">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+                            <feOffset dx="0" dy="4" result="offsetblur"/>
+                            <feComponentTransfer>
+                                <feFuncA type="linear" slope="0.3"/>
+                            </feComponentTransfer>
+                            <feMerge>
+                                <feMergeNode/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+                            <feMerge>
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- Background Elements -->
+                    <circle cx="150" cy="120" r="80" fill="rgba(255,255,255,0.05)"/>
+                    <circle cx="580" cy="180" r="100" fill="rgba(255,255,255,0.05)"/>
+                    <circle cx="600" cy="450" r="60" fill="rgba(255,255,255,0.05)"/>
+
+                    <!-- Large WiFi Symbol (Top Center) -->
+                    <g transform="translate(350, 100)" style="animation: wifiPulse 3s ease-in-out infinite;">
+                        <!-- Outer Arc -->
+                        <path d="M -100 30 Q -70 -40 0 -50 Q 70 -40 100 30"
+                              stroke="url(#wifiGradient)"
+                              stroke-width="12"
+                              stroke-linecap="round"
+                              fill="none"
+                              opacity="0.8"
+                              filter="url(#glow)"/>
+                        <!-- Middle Arc -->
+                        <path d="M -65 30 Q -45 5 0 -5 Q 45 5 65 30"
+                              stroke="url(#wifiGradient)"
+                              stroke-width="12"
+                              stroke-linecap="round"
+                              fill="none"
+                              opacity="0.9"/>
+                        <!-- Inner Arc -->
+                        <path d="M -35 30 Q -22 18 0 15 Q 22 18 35 30"
+                              stroke="url(#wifiGradient)"
+                              stroke-width="12"
+                              stroke-linecap="round"
+                              fill="none"/>
+                        <!-- Center Dot -->
+                        <circle cx="0" cy="45" r="10" fill="url(#wifiGradient)"/>
+                    </g>
+
+                    <!-- Ground Shadow -->
+                    <ellipse cx="350" cy="560" rx="320" ry="30" fill="rgba(0,0,0,0.08)"/>
+
+                    <!-- Central Login Device (Large Phone) -->
+                    <g transform="translate(350, 340)" filter="url(#shadow)" style="animation: float 4s ease-in-out infinite;">
+                        <!-- Phone Shadow -->
+                        <ellipse cx="0" cy="150" rx="65" ry="8" fill="rgba(0,0,0,0.15)"/>
+
+                        <!-- Phone Body -->
+                        <rect x="-70" y="-160" width="140" height="280" rx="20"
+                              fill="url(#phoneGradient)"
+                              stroke="rgba(255,255,255,0.4)"
+                              stroke-width="2"/>
+
+                        <!-- Phone Screen -->
+                        <rect x="-60" y="-150" width="120" height="260" rx="15" fill="rgba(255,255,255,0.98)"/>
+
+                        <!-- WiFi Icon on Screen -->
+                        <g transform="translate(0, -100)">
+                            <path d="M -25 0 Q -15 -12 0 -15 Q 15 -12 25 0"
+                                  stroke="#5BA3F5"
+                                  stroke-width="4"
+                                  stroke-linecap="round"
+                                  fill="none"/>
+                            <path d="M -15 5 Q -8 -2 0 -4 Q 8 -2 15 5"
+                                  stroke="#5BA3F5"
+                                  stroke-width="4"
+                                  stroke-linecap="round"
+                                  fill="none"/>
+                            <circle cx="0" cy="12" r="4" fill="#5BA3F5"/>
+                        </g>
+
+                        <!-- Input Fields -->
+                        <rect x="-50" y="-50" width="100" height="35" rx="8" fill="#F0F4F8" stroke="#E1E8ED" stroke-width="1.5"/>
+                        <text x="-40" y="-27" font-family="Arial" font-size="11" fill="#94A3B8">Username</text>
+
+                        <rect x="-50" y="-5" width="100" height="35" rx="8" fill="#F0F4F8" stroke="#E1E8ED" stroke-width="1.5"/>
+                        <circle cx="-35" cy="12" r="2.5" fill="#94A3B8"/>
+                        <circle cx="-25" cy="12" r="2.5" fill="#94A3B8"/>
+                        <circle cx="-15" cy="12" r="2.5" fill="#94A3B8"/>
+                        <circle cx="-5" cy="12" r="2.5" fill="#94A3B8"/>
+
+                        <!-- Wi-Fi Text Label -->
+                        <text x="0" y="52" font-family="Arial" font-size="12" font-weight="600" fill="#5BA3F5" text-anchor="middle">Wi-Fi Hotspot</text>
+
+                        <!-- Login Button -->
+                        <rect x="-50" y="65" width="100" height="42" rx="21" fill="url(#buttonGradient)" filter="url(#shadow)"/>
+                        <text x="0" y="92" font-family="Arial" font-size="14" font-weight="700" fill="white" text-anchor="middle">LOGIN</text>
+                    </g>
+
+                    <!-- Person 1 - Left (Pink/Purple) -->
+                    <g transform="translate(130, 480)">
+                        <!-- Shadow -->
+                        <ellipse cx="0" cy="75" rx="25" ry="6" fill="rgba(0,0,0,0.1)"/>
+
+                        <!-- Body -->
+                        <rect x="-28" y="15" width="56" height="45" rx="10" fill="url(#personGradient1)"/>
+                        <ellipse cx="0" cy="58" rx="30" ry="12" fill="url(#personGradient1)"/>
+
+                        <!-- Head -->
+                        <circle cx="0" cy="-10" r="24" fill="#FFD4C8"/>
+
+                        <!-- Hair -->
+                        <ellipse cx="0" cy="-18" rx="24" ry="18" fill="#4A3428"/>
+                        <circle cx="-14" cy="-10" r="12" fill="#4A3428"/>
+                        <circle cx="14" cy="-10" r="12" fill="#4A3428"/>
+
+                        <!-- Face Features -->
+                        <ellipse cx="-8" cy="-8" rx="2.5" ry="3" fill="#2D1F1A"/>
+                        <ellipse cx="8" cy="-8" rx="2.5" ry="3" fill="#2D1F1A"/>
+                        <path d="M -6 2 Q 0 5 6 2" stroke="#FF9999" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+                        <!-- Arms -->
+                        <rect x="-35" y="20" width="12" height="35" rx="6" fill="#FFD4C8"/>
+                        <rect x="23" y="20" width="12" height="35" rx="6" fill="#FFD4C8"/>
+
+                        <!-- Phone in Hand -->
+                        <rect x="-38" y="48" width="10" height="16" rx="2" fill="#2C3E50"/>
+
+                        <!-- Legs -->
+                        <rect x="-15" y="55" width="12" height="38" rx="6" fill="#D77DD9"/>
+                        <rect x="3" y="55" width="12" height="38" rx="6" fill="#D77DD9"/>
+
+                        <!-- Shoes -->
+                        <ellipse cx="-9" cy="95" rx="8" ry="5" fill="#B560B0"/>
+                        <ellipse cx="9" cy="95" rx="8" ry="5" fill="#B560B0"/>
+                    </g>
+
+                    <!-- Person 2 - Left-Center (Yellow/Orange) -->
+                    <g transform="translate(240, 480)">
+                        <!-- Shadow -->
+                        <ellipse cx="0" cy="75" rx="25" ry="6" fill="rgba(0,0,0,0.1)"/>
+
+                        <!-- Body -->
+                        <rect x="-28" y="15" width="56" height="45" rx="10" fill="url(#personGradient2)"/>
+                        <ellipse cx="0" cy="58" rx="30" ry="12" fill="url(#personGradient2)"/>
+
+                        <!-- Head -->
+                        <circle cx="0" cy="-10" r="24" fill="#D4A574"/>
+
+                        <!-- Hat -->
+                        <ellipse cx="0" cy="-28" rx="26" ry="8" fill="#E8B55D"/>
+                        <path d="M -20 -28 Q -18 -42 0 -45 Q 18 -42 20 -28 Z" fill="#E8B55D"/>
+
+                        <!-- Face Features -->
+                        <ellipse cx="-8" cy="-8" rx="2.5" ry="3" fill="#2D1F1A"/>
+                        <ellipse cx="8" cy="-8" rx="2.5" ry="3" fill="#2D1F1A"/>
+                        <path d="M -6 2 Q 0 5 6 2" stroke="#FF9999" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+                        <!-- Arms -->
+                        <rect x="-35" y="20" width="12" height="35" rx="6" fill="#D4A574"/>
+                        <rect x="23" y="20" width="12" height="35" rx="6" fill="#D4A574"/>
+
+                        <!-- Phone in Hand -->
+                        <rect x="-38" y="48" width="10" height="16" rx="2" fill="#2C3E50"/>
+
+                        <!-- Legs -->
+                        <rect x="-15" y="55" width="12" height="38" rx="6" fill="#E8A833"/>
+                        <rect x="3" y="55" width="12" height="38" rx="6" fill="#E8A833"/>
+
+                        <!-- Shoes -->
+                        <ellipse cx="-9" cy="95" rx="8" ry="5" fill="#2C3E50"/>
+                        <ellipse cx="9" cy="95" rx="8" ry="5" fill="#2C3E50"/>
+                    </g>
+
+                    <!-- Person 3 - Right-Center (Yellow) -->
+                    <g transform="translate(460, 480)">
+                        <!-- Shadow -->
+                        <ellipse cx="0" cy="75" rx="25" ry="6" fill="rgba(0,0,0,0.1)"/>
+
+                        <!-- Body -->
+                        <rect x="-28" y="15" width="56" height="45" rx="10" fill="url(#personGradient3)"/>
+                        <ellipse cx="0" cy="58" rx="30" ry="12" fill="url(#personGradient3)"/>
+
+                        <!-- Head -->
+                        <circle cx="0" cy="-10" r="24" fill="#FFD4C8"/>
+
+                        <!-- Hair -->
+                        <circle cx="0" cy="-18" r="24" fill="#5D4037"/>
+                        <circle cx="-12" cy="-8" r="14" fill="#5D4037"/>
+                        <circle cx="12" cy="-8" r="14" fill="#5D4037"/>
+
+                        <!-- Face Features -->
+                        <ellipse cx="-8" cy="-6" rx="2.5" ry="3" fill="#2D1F1A"/>
+                        <ellipse cx="8" cy="-6" rx="2.5" ry="3" fill="#2D1F1A"/>
+                        <path d="M -6 4 Q 0 7 6 4" stroke="#FF9999" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+                        <!-- Arms -->
+                        <rect x="-35" y="20" width="12" height="35" rx="6" fill="#FFD4C8"/>
+                        <rect x="23" y="20" width="12" height="35" rx="6" fill="#FFD4C8"/>
+
+                        <!-- Phone in Hand -->
+                        <rect x="23" y="48" width="10" height="16" rx="2" fill="#2C3E50"/>
+
+                        <!-- Legs -->
+                        <rect x="-15" y="55" width="12" height="38" rx="6" fill="#2C3E50"/>
+                        <rect x="3" y="55" width="12" height="38" rx="6" fill="#2C3E50"/>
+
+                        <!-- Shoes -->
+                        <ellipse cx="-9" cy="95" rx="8" ry="5" fill="#1A252F"/>
+                        <ellipse cx="9" cy="95" rx="8" ry="5" fill="#1A252F"/>
+                    </g>
+
+                    <!-- Person 4 - Right (Teal/Cyan) -->
+                    <g transform="translate(570, 480)">
+                        <!-- Shadow -->
+                        <ellipse cx="0" cy="75" rx="25" ry="6" fill="rgba(0,0,0,0.1)"/>
+
+                        <!-- Body -->
+                        <rect x="-28" y="15" width="56" height="45" rx="10" fill="url(#personGradient4)"/>
+                        <ellipse cx="0" cy="58" rx="30" ry="12" fill="url(#personGradient4)"/>
+
+                        <!-- Head -->
+                        <circle cx="0" cy="-10" r="24" fill="#FFD4C8"/>
+
+                        <!-- Hat -->
+                        <ellipse cx="0" cy="-28" rx="24" ry="7" fill="#C77DC7"/>
+                        <path d="M -18 -28 Q -16 -40 0 -43 Q 16 -40 18 -28 Z" fill="#C77DC7"/>
+
+                        <!-- Hair Sides -->
+                        <circle cx="-14" cy="-12" r="10" fill="#FFB86C"/>
+                        <circle cx="14" cy="-12" r="10" fill="#FFB86C"/>
+
+                        <!-- Face Features -->
+                        <ellipse cx="-8" cy="-8" rx="2.5" ry="3" fill="#2D1F1A"/>
+                        <ellipse cx="8" cy="-8" rx="2.5" ry="3" fill="#2D1F1A"/>
+                        <path d="M -6 2 Q 0 5 6 2" stroke="#FF9999" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+                        <!-- Arms -->
+                        <rect x="-35" y="20" width="12" height="35" rx="6" fill="#FFD4C8"/>
+                        <rect x="23" y="20" width="12" height="35" rx="6" fill="#FFD4C8"/>
+
+                        <!-- Phone in Hand -->
+                        <rect x="23" y="48" width="10" height="16" rx="2" fill="#2C3E50"/>
+
+                        <!-- Legs -->
+                        <rect x="-15" y="55" width="12" height="38" rx="6" fill="#52C7B8"/>
+                        <rect x="3" y="55" width="12" height="38" rx="6" fill="#52C7B8"/>
+
+                        <!-- Shoes -->
+                        <ellipse cx="-9" cy="95" rx="8" ry="5" fill="#FFB3BA"/>
+                        <ellipse cx="9" cy="95" rx="8" ry="5" fill="#FFB3BA"/>
+                    </g>
+
+                    <!-- Floating WiFi Icons (Decorative) -->
+                    <g opacity="0.4" style="animation: float 3s ease-in-out infinite;">
+                        <path d="M 100 240 Q 107 233 114 240" stroke="rgba(91,163,245,0.6)" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <circle cx="107" cy="247" r="3" fill="rgba(91,163,245,0.6)"/>
+                    </g>
+                    <g opacity="0.4" style="animation: float 3.5s ease-in-out infinite;">
+                        <path d="M 600 280 Q 607 273 614 280" stroke="rgba(91,163,245,0.6)" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <circle cx="607" cy="287" r="3" fill="rgba(91,163,245,0.6)"/>
+                    </g>
+                    <g opacity="0.3" style="animation: float 4s ease-in-out infinite;">
+                        <path d="M 80 380 Q 87 373 94 380" stroke="rgba(91,163,245,0.6)" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <circle cx="87" cy="387" r="3" fill="rgba(91,163,245,0.6)"/>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Announcement Card -->
+            <div class="announcement-card">
+                <h3>{Lang::T('Announcement')}</h3>
+                <div class="announcement-content">
+                    {$Announcement = "{$PAGES_PATH}/Announcement.html"}
+                    {if file_exists($Announcement)}
+                        {include file=$Announcement}
+                    {else}
+                        <p>Welcome to {$_c['CompanyName']}! We're glad to have you here.</p>
+                    {/if}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section - Login Form (Both Desktop & Mobile) -->
+        <div class="right-section">
+            <div class="language-selector">
+                <span>English (UK)</span>
+                <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                    <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div class="form-container">
+                <h1 class="welcome-title">Login</h1>
+
+                {if isset($notify)}
+                    {$notify}
+                {/if}
+
+                <form action="{Text::url('login/post')}" method="post">
+                    <input type="hidden" name="csrf_token" value="{$csrf_token}">
+
+                    <!-- Email/Username Field -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            {if $_c['registration_username'] == 'phone'}
+                                {Lang::T('Phone Number')}
+                            {elseif $_c['registration_username'] == 'email'}
+                                {Lang::T('Email')}
+                            {else}
+                                {Lang::T('Usernames')}
+                            {/if}
+                        </label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect>
+                                    <polyline points="3 7 12 13 21 7"></polyline>
+                                </svg>
+                            </span>
+                            <input type="text" class="form-input" name="username" required
+                                placeholder="{if $_c['registration_username'] == 'phone'}Phone Number{elseif $_c['registration_username'] == 'email'}Email{else}Username{/if}">
+                        </div>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label class="form-label">{Lang::T('Password')}</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="5" y="11" width="14" height="10" rx="2" ry="2"></rect>
+                                    <path d="M12 17a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"></path>
+                                    <path d="M8 11V7a4 4 0 0 1 8 0v4"></path>
+                                </svg>
+                            </span>
+                            <input type="password" class="form-input" name="password" id="password" required placeholder="Password">
+                            <span class="password-toggle" onclick="togglePassword()">
+                                <svg id="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me & Forgot Password (Mobile Only) -->
+                    <div class="remember-me-group">
+                        <label>
+                            <input type="checkbox" name="remember_me">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="{Text::url('forgot')}">Forgot password?</a>
+                    </div>
+
+                    <!-- Login & Register Buttons -->
+                    <div class="btn-group-justified">
+                        {if $_c['disable_registration'] != 'noreg'}
+                            <a href="{Text::url('register')}" class="btn btn-success">{Lang::T('Register')}</a>
+                        {/if}
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </div>
+
+                    <!-- Desktop Forgot Password Link -->
+                    <div class="text-center" style="margin-bottom: 10px;">
+                        <a href="{Text::url('forgot')}" class="btn-link" style="display: inline-block;">{Lang::T('Forgot Password')}</a>
+                    </div>
+
+                    <!-- Sign Up Link (Mobile) -->
+                    <div class="signup-link">
+                        Don't have an account? <a href="{Text::url('register')}">Sign Up</a>
+                    </div>
+
+                    <!-- Privacy & T&C Links (Desktop) -->
+                    <div class="footer-links">
+                        <a href="javascript:showPrivacy()">Privacy</a>
+                        <span style="color: #D1D5DB;">•</span>
+                        <a href="javascript:showTaC()">T &amp; C</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcement Modal (Mobile Only) -->
+    <div class="announcement-modal" id="announcementModal">
+        <div class="announcement-modal-content">
+            <div class="announcement-modal-header">
+                <h3>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    {Lang::T('Announcement')}
+                </h3>
+                <button class="announcement-modal-close" onclick="closeAnnouncementModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="announcement-modal-body">
+                {$Announcement = "{$PAGES_PATH}/Announcement.html"}
+                {if file_exists($Announcement)}
+                    {include file=$Announcement}
+                {else}
+                    <p>Welcome to {$_c['CompanyName']}! We're glad to have you here.</p>
+                    <p>Stay tuned for updates and important announcements.</p>
+                {/if}
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Modal -->
+    <div class="modal fade" id="HTMLModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="HTMLModal_konten"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+    <script>
+    {literal}
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        }
+
+        // Announcement Modal Functions
+        function showAnnouncementModal() {
+            const modal = document.getElementById('announcementModal');
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+
+        function closeAnnouncementModal() {
+            const modal = document.getElementById('announcementModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('announcementModal');
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeAnnouncementModal();
+                }
+            });
+        });
+
+        function showPrivacy() {
+            $('#HTMLModal_konten').html('<h4>Privacy Policy</h4><p>Loading privacy policy...</p>');
+            $('#HTMLModal').modal('show');
+            $.get('{/literal}{Text::url("pages/Privacy")}{literal}', function(data) {
+                $('#HTMLModal_konten').html(data);
+            }).fail(function() {
+                $('#HTMLModal_konten').html('<h4>Privacy Policy</h4><p>Privacy policy content not available.</p>');
+            });
+        }
+
+        function showTaC() {
+            $('#HTMLModal_konten').html('<h4>Terms &amp; Conditions</h4><p>Loading terms and conditions...</p>');
+            $('#HTMLModal').modal('show');
+            $.get('{/literal}{Text::url("pages/TaC")}{literal}', function(data) {
+                $('#HTMLModal_konten').html(data);
+            }).fail(function() {
+                $('#HTMLModal_konten').html('<h4>Terms &amp; Conditions</h4><p>Terms and conditions content not available.</p>');
+            });
+        }
+    {/literal}
+    </script>
+</body>
+</html>

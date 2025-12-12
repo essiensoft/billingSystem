@@ -71,6 +71,11 @@ switch ($action) {
                 $msg .= Lang::T('All field is required') . '<br>';
             }
 
+            // SECURITY FIX: Validate IP address format
+            if (!empty($ip_address) && !filter_var($ip_address, FILTER_VALIDATE_IP)) {
+                $msg .= Lang::T('Invalid IP address format. Please enter a valid IPv4 or IPv6 address') . '<br>';
+            }
+
             $d = ORM::for_table('tbl_routers')->where('ip_address', $ip_address)->find_one();
             if ($d) {
                 $msg .= Lang::T('IP Router Already Exist') . '<br>';
@@ -117,6 +122,11 @@ switch ($action) {
         if($enabled || _post("testIt")){
             if ($ip_address == '' or $username == '') {
                 $msg .= Lang::T('All field is required') . '<br>';
+            }
+
+            // SECURITY FIX: Validate IP address format
+            if (!empty($ip_address) && !filter_var($ip_address, FILTER_VALIDATE_IP)) {
+                $msg .= Lang::T('Invalid IP address format. Please enter a valid IPv4 or IPv6 address') . '<br>';
             }
         }
 
