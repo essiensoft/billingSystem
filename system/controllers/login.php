@@ -118,7 +118,8 @@ switch ($do) {
                     _alert(Lang::T('Internet Plan Expired'), 'danger', "login");
                 }
             } else {
-                $v = ORM::for_table('tbl_voucher')->whereRaw("BINARY code = '$voucher'")->find_one();
+                // SECURITY FIX: Use parameterized query instead of raw SQL to prevent SQL injection
+                $v = ORM::for_table('tbl_voucher')->where('code', $voucher)->find_one();
                 if (!$v) {
                     _alert(Lang::T('Voucher invalid'), 'danger', "login");
                 }
@@ -175,7 +176,8 @@ switch ($do) {
         } else {
             $voucher = Text::alphanumeric(_post('voucher'), "-_.,");
             $username = _post('username');
-            $v1 = ORM::for_table('tbl_voucher')->whereRaw("BINARY code = '$voucher'")->find_one();
+            // SECURITY FIX: Use parameterized query instead of raw SQL to prevent SQL injection
+            $v1 = ORM::for_table('tbl_voucher')->where('code', $voucher)->find_one();
             if ($v1) {
                 // voucher exists, check customer exists or not
                 $user = ORM::for_table('tbl_customers')->where('username', $username)->find_one();
@@ -308,9 +310,45 @@ switch ($do) {
         run_hook('customer_view_login'); #HOOK
         $csrf_token = Csrf::generateAndStoreToken();
         if ($config['disable_registration'] == 'yes') {
+            // Fetch guest purchase plans (Hotspot plans only, enabled, and sorted by price)
+            $guest_plans_raw = ORM::for_table('tbl_plans')
+                ->left_outer_join('tbl_bandwidth', array('tbl_plans.id_bw', '=', 'tbl_bandwidth.id'))
+                ->select('tbl_plans.*')
+                ->select('tbl_bandwidth.name_bw', 'name_bw')
+                ->where('tbl_plans.enabled', '1')
+                ->where('tbl_plans.type', 'Hotspot')
+                ->order_by_asc('tbl_plans.price')
+                ->find_array();
+
+            // Filter plans to only include those with valid, enabled routers
+            $guest_plans = [];
+            $router_error = '';
+
+            foreach ($guest_plans_raw as $plan) {
+                // Check if router exists and is enabled
+                $router = ORM::for_table('tbl_routers')
+                    ->where('id', $plan['routers'])
+                    ->where('enabled', '1')
+                    ->find_one();
+
+                if ($router) {
+                    $guest_plans[] = $plan;
+                } else {
+                    _log("Guest purchase warning: Plan '{$plan['name_plan']}' (ID: {$plan['id']}) has invalid/disabled router ID: {$plan['routers']}");
+                }
+            }
+
+            // If no valid plans available, show error
+            if (empty($guest_plans) && !empty($guest_plans_raw)) {
+                $router_error = Lang::T('Internet packages are currently unavailable due to network configuration. Please contact support.');
+                _log('Guest purchase error: No valid routers configured for any guest purchase plans');
+            }
+
             $ui->assign('csrf_token', $csrf_token);
             $ui->assign('_title', Lang::T('Activation'));
             $ui->assign('code', alphanumeric(_get('code'), "-"));
+            $ui->assign('guest_plans', $guest_plans);
+            $ui->assign('router_error', $router_error);
             $ui->display('customer/login-noreg.tpl');
         } else {
             $UPLOAD_URL_PATH = str_replace($root_path, '',  $UPLOAD_PATH);
