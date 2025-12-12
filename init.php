@@ -299,9 +299,14 @@ function generateUniqueNumericVouchers($totalVouchers, $length = 8)
     for ($j = 0; $j < $totalVouchers; $j++) {
         do {
             $voucherCode = '';
-            // Generate the voucher code
-            for ($i = 0; $i < $length; $i++) {
-                $voucherCode .= $characters[rand(0, $charactersLength - 1)];
+            // SECURITY FIX: Use cryptographically secure random_int() instead of weak rand()
+            try {
+                for ($i = 0; $i < $length; $i++) {
+                    $voucherCode .= $characters[random_int(0, $charactersLength - 1)];
+                }
+            } catch (Exception $e) {
+                _log("CRITICAL: Failed to generate cryptographically secure voucher - " . $e->getMessage(), 'System', 0);
+                throw new Exception("Voucher generation failed. Please contact administrator.");
             }
             // Check if the generated voucher code already exists in the array
             $isUnique = !in_array($voucherCode, $vouchers);

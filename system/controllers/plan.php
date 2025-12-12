@@ -951,7 +951,12 @@ switch ($action) {
         }
         $code = Text::alphanumeric(_post('code'), "-_.,");
         $user = ORM::for_table('tbl_customers')->where('id', _post('id_customer'))->find_one();
-        $v1 = ORM::for_table('tbl_voucher')->whereRaw("BINARY code = '$code'")->where('status', 0)->find_one();
+        // SECURITY FIX: Use parameterized query to prevent SQL injection
+        // Note: Removed BINARY comparison for security (case-insensitive now)
+        $v1 = ORM::for_table('tbl_voucher')
+            ->where('code', $code)
+            ->where('status', 0)
+            ->find_one();
 
         run_hook('refill_customer'); #HOOK
         if ($v1) {
@@ -1034,13 +1039,26 @@ switch ($action) {
         }
         break;
     case 'extend':
+        // SECURITY FIX: Add admin permission check to prevent IDOR
+        if (!in_array($admin['user_type'], ['SuperAdmin', 'Admin'])) {
+            _alert(Lang::T('You do not have permission to access this page'), 'danger', "dashboard");
+        }
+        
         $id = $routes[2];
         $days = $routes[3];
-        $svoucher = $_GET['svoucher'];
+        $svoucher = _req('svoucher'); // Use _req instead of $_GET
+        
         if (App::getVoucherValue($svoucher)) {
             r2(getUrl('plan'), 's', "Extend already done");
         }
+        
         $tur = ORM::for_table('tbl_user_recharges')->find_one($id);
+        
+        // SECURITY FIX: Verify record exists before accessing
+        if (!$tur) {
+            r2(getUrl('plan'), 'e', "Plan not found");
+        }
+        
         $status = $tur['status'];
         if ($status == 'off') {
             if (strtotime($tur['expiration'] . ' ' . $tur['time']) > time()) {
