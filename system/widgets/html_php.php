@@ -7,15 +7,20 @@ class html_php
     {
         global $ui;
         $ui->assign('card_header', $data['title']);
-        ob_start();
-        try{
-        eval('?>'. $data['content']);
-        }catch(Exception $e){
-            echo $e->getMessage();
-            echo "<br>";
-            echo $e->getTraceAsString();
+        
+        // SECURITY FIX: Remove eval() to prevent RCE
+        // Sanitize HTML content to allow only safe tags
+        $content = SecurityHelper::sanitizeHtml($data['content']);
+        
+        // Log security event if PHP code detected
+        if (stripos($data['content'], '<?php') !== false || stripos($data['content'], '<?') !== false) {
+            SecurityHelper::logSecurityEvent(
+                "Widget contains PHP code (disabled): " . $data['title'],
+                'high',
+                ['widget_id' => $data['id'] ?? 'unknown']
+            );
         }
-        $content = ob_get_clean();
+        
         return $content;
     }
 }

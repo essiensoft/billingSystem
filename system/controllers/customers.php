@@ -842,9 +842,12 @@ switch ($action) {
         $append_url = "&order=" . urlencode($order) . "&filter=" . urlencode($filter) . "&orderby=" . urlencode($orderby);
 
         if ($search != '') {
+            // SECURITY FIX: Use parameterized query to prevent SQL injection
             $query = ORM::for_table('tbl_customers')
-                ->whereRaw("username LIKE '%$search%' OR fullname LIKE '%$search%' OR address LIKE '%$search%' " .
-                    "OR phonenumber LIKE '%$search%' OR email LIKE '%$search%' AND status='$filter'");
+                ->where_raw(
+                    "(username LIKE ? OR fullname LIKE ? OR address LIKE ? OR phonenumber LIKE ? OR email LIKE ?) AND status=?",
+                    ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%", $filter]
+                );
         } else {
             $query = ORM::for_table('tbl_customers');
             $query->where("status", $filter);
