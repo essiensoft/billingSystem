@@ -1,0 +1,56 @@
+# Ignore Docker files
+docker-compose.yml
+docker-compose.override.yml
+.dockerignore
+
+# Ignore environment files
+.env
+.env.local
+.env.production
+
+# Ignore encryption key
+.encryption_key
+
+# Ignore logs
+*.log
+logs/
+
+# Ignore cache
+ui/cache/*
+ui/compiled/*
+!ui/cache/.gitkeep
+!ui/compiled/.gitkeep
+
+# Ignore uploads
+system/uploads/*
+!system/uploads/.gitkeep
+
+# Ignore config
+config.php
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore node modules
+node_modules/
+
+# Ignore composer
+/vendor/
+
+# Ignore test files
+/tests/tmp/
+/tests/*.html
+/tests/*.txt
+
+# Ignore backup files
+*.sql
+*.bak
+backup_*

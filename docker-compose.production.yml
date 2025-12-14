@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  # PHPNuxBill Application
+  phpnuxbill:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: phpnuxbill-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME:-phpnuxbill}
+      - DB_USER=${DB_USER:-phpnuxbill_user}
+      - DB_PASS=${DB_PASS:-ChangeThisPassword}
+      - APP_URL=${APP_URL:-http://yourdomain.com}
+      - TZ=${TZ:-UTC}
+      # volumes:
+      # Uncomment for persistent data in production
+      # - ./ui/compiled:/var/www/html/ui/compiled
+      # - ./ui/cache:/var/www/html/ui/cache
+      # - ./system/uploads:/var/www/html/system/uploads
+      # - ./config.php:/var/www/html/config.php
+      # - ./.encryption_key:/var/www/html/.encryption_key
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - phpnuxbill-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: phpnuxbill-mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-ChangeThisRootPassword}
+      - MYSQL_DATABASE=${DB_NAME:-phpnuxbill}
+      - MYSQL_USER=${DB_USER:-phpnuxbill_user}
+      - MYSQL_PASSWORD=${DB_PASS:-ChangeThisPassword}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - phpnuxbill-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password_here" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password
+
+  # phpMyAdmin (Optional - for database management)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpnuxbill-phpmyadmin
+    restart: unless-stopped
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=root
+      - PMA_PASSWORD=${MYSQL_ROOT_PASSWORD:-ChangeThisRootPassword}
+      - UPLOAD_LIMIT=20M
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql
+    networks:
+      - phpnuxbill-network
+
+volumes:
+  mysql-data:
+    driver: local
+
+networks:
+  phpnuxbill-network:
+    driver: bridge
