@@ -52,7 +52,7 @@ if (!file_exists($root_path .  File::pathFixer('system/orm.php'))) {
 }
 
 $DEVICE_PATH = $root_path . File::pathFixer('system/devices');
-$UPLOAD_PATH = $root_path . File::pathFixer('system/uploads');
+$UPLOAD_PATH = $root_path . File::pathFixer('system/uploads') . DIRECTORY_SEPARATOR;
 $CACHE_PATH = $root_path . File::pathFixer('system/cache');
 $PAGES_PATH = $root_path . File::pathFixer('pages');
 $PLUGIN_PATH = $root_path . File::pathFixer('system/plugin');

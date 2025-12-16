@@ -21,8 +21,16 @@ ui/compiled/*
 !ui/cache/.gitkeep
 !ui/compiled/.gitkeep
 
-# Ignore uploads
-system/uploads/*
+# Ignore user uploads but keep default files
+system/uploads/*.jpg
+system/uploads/*.jpeg
+system/uploads/*.gif
+system/uploads/*.bmp
+system/uploads/*.pdf
+system/uploads/*.zip
+system/uploads/*.rar
+system/uploads/_sysfrm_tmp_/*
+!system/uploads/*.default.*
 !system/uploads/.gitkeep
 
 # Ignore config
