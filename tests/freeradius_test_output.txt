@@ -1,0 +1,7 @@
+
+==========================================
+ UNIT TESTS - FreeRADIUS Configuration
+==========================================
+
+--- Test: FreeRADIUS directory structure ---
+✓ PASS: freeradius/ directory exists

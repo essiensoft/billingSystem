@@ -1,0 +1,121 @@
+# SQL Counter module for PHPNuxBill
+# Tracks session time and data usage limits
+
+# Access Period counter - tracks time since first login
+sqlcounter accessperiod {
+    sql_module_instance = sql
+    dialect = mysql
+
+    counter_name = Max-Access-Period-Time
+    check_name = Access-Period
+    key = User-Name
+    reset = never
+
+    query = "\
+        SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(AcctStartTime) \
+        FROM radacct \
+        WHERE UserName='%{${key}}' \
+        ORDER BY AcctStartTime LIMIT 1"
+}
+
+# Quota Limit counter - tracks total data usage
+sqlcounter quotalimit {
+    sql_module_instance = sql
+    dialect = mysql
+
+    counter_name = Max-Volume
+    check_name = Max-Data
+    reply_name = Mikrotik-Total-Limit
+    key = User-Name
+    reset = never
+
+    query = "\
+        SELECT (SUM(acctinputoctets) + SUM(acctoutputoctets)) \
+        FROM radacct \
+        WHERE UserName='%{${key}}'"
+}
+
+# Uptime Limit counter - tracks total session time
+sqlcounter uptimelimit {
+    sql_module_instance = sql
+    dialect = mysql
+
+    counter_name = Max-All-Session-Time
+    check_name = Max-All-Session
+    key = User-Name
+    reset = never
+
+    query = "\
+        SELECT SUM(AcctSessionTime) \
+        FROM radacct \
+        WHERE UserName='%{${key}}'"
+}
+
+# Daily session time counter
+sqlcounter dailycounter {
+    sql_module_instance = sql
+    dialect = mysql
+
+    counter_name = Daily-Session-Time
+    check_name = Max-Daily-Session
+    key = User-Name
+    reset = daily
+
+    query = "\
+        SELECT SUM(AcctSessionTime) \
+        FROM radacct \
+        WHERE UserName='%{${key}}' \
+        AND UNIX_TIMESTAMP(AcctStartTime) > '%b'"
+}
+
+# Monthly session counter
+sqlcounter monthlycounter {
+    sql_module_instance = sql
+    dialect = mysql
+
+    counter_name = Monthly-Session-Time
+    check_name = Max-Monthly-Session
+    key = User-Name
+    reset = monthly
+
+    query = "\
+        SELECT SUM(AcctSessionTime) \
+        FROM radacct \
+        WHERE UserName='%{${key}}' \
+        AND UNIX_TIMESTAMP(AcctStartTime) > '%b'"
+}
+
+# No reset counter for total session
+sqlcounter noresetcounter {
+    sql_module_instance = sql
+    dialect = mysql
+
+    counter_name = Max-All-Session-Time
+    check_name = Max-All-Session
+    key = User-Name
+    reset = never
+
+    query = "\
+        SELECT SUM(AcctSessionTime) \
+        FROM radacct \
+        WHERE UserName='%{${key}}'"
+}
+
+# Expire on login counter
+sqlcounter expire_on_login {
+    sql_module_instance = sql
+    dialect = mysql
+
+    counter_name = Expire-After
+    check_name = Expire-After
+    key = User-Name
+    reset = never
+
+    query = "\
+        SELECT IFNULL( \
+            (SELECT UNIX_TIMESTAMP() - UNIX_TIMESTAMP(AcctStartTime) \
+             FROM radacct \
+             WHERE UserName='%{${key}}' \
+             ORDER BY AcctStartTime \
+             LIMIT 1), 0)"
+}

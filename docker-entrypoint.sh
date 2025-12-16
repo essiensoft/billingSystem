@@ -124,6 +124,15 @@ try {
 }
 "
 
+# Initialize RADIUS tables if they don't exist
+echo "Initializing RADIUS tables..."
+if [ -f /var/www/html/scripts/init-radius-db.sh ]; then
+    bash /var/www/html/scripts/init-radius-db.sh || echo "Note: RADIUS tables initialization skipped (database may not be ready yet)"
+else
+    echo "Warning: RADIUS initialization script not found"
+fi
+
+
 # Copy default upload files if they don't exist (fixes Docker volume override)
 echo "Checking default upload files..."
 

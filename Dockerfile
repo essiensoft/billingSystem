@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     git \
     unzip \
     mariadb-client \
+    freeradius-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Configure PHP extensions
@@ -70,7 +71,7 @@ WORKDIR /var/www/html
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Copy application files
+# Copy application files (includes scripts/ directory)
 COPY . /var/www/html/
 
 # Set proper permissions

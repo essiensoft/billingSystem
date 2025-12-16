@@ -1,0 +1,168 @@
+sql {
+    driver = "rlm_sql_mysql"
+    dialect = "mysql"
+
+    # Connection info - uses Docker service name
+    server = "mysql"
+    port = 3306
+    login = "ENV_DB_USER"
+    password = "ENV_DB_PASS"
+
+    # Database table configuration
+    radius_db = "ENV_DB_NAME"
+
+    # Connection pool settings
+    pool {
+        start = ${thread[pool].start_servers}
+        min = ${thread[pool].min_spare_servers}
+        max = ${thread[pool].max_servers}
+        spare = ${thread[pool].max_spare_servers}
+        uses = 0
+        retry_delay = 30
+        lifetime = 0
+        idle_timeout = 60
+    }
+
+    # Read NAS clients from database
+    read_clients = yes
+    client_table = "nas"
+
+    # Table names matching PHPNuxBill schema
+    acct_table1 = "radacct"
+    acct_table2 = "radacct"
+    postauth_table = "radpostauth"
+    authcheck_table = "radcheck"
+    groupcheck_table = "radgroupcheck"
+    authreply_table = "radreply"
+    groupreply_table = "radgroupreply"
+    usergroup_table = "radusergroup"
+
+    # SQL queries to delete stale sessions
+    delete_stale_sessions = yes
+
+    # MySQL specific options
+    mysql {
+        # TLS is not needed within Docker network
+        tls {
+            # All TLS options commented out for internal Docker communication
+        }
+        warnings = auto
+    }
+
+    # Group membership query
+    group_membership_query = "\
+        SELECT groupname \
+        FROM ${usergroup_table} \
+        WHERE username = '%{SQL-User-Name}' \
+        ORDER BY priority"
+
+    # Authorization check queries
+    authorize_check_query = "\
+        SELECT id, username, attribute, value, op \
+        FROM ${authcheck_table} \
+        WHERE username = '%{SQL-User-Name}' \
+        ORDER BY id"
+
+    authorize_reply_query = "\
+        SELECT id, username, attribute, value, op \
+        FROM ${authreply_table} \
+        WHERE username = '%{SQL-User-Name}' \
+        ORDER BY id"
+
+    authorize_group_check_query = "\
+        SELECT id, groupname, attribute, value, op \
+        FROM ${groupcheck_table} \
+        WHERE groupname = '%{${group_attribute}}' \
+        ORDER BY id"
+
+    authorize_group_reply_query = "\
+        SELECT id, groupname, attribute, value, op \
+        FROM ${groupreply_table} \
+        WHERE groupname = '%{${group_attribute}}' \
+        ORDER BY id"
+
+    # Accounting queries
+    accounting {
+        reference = "%{tolower:type.%{Acct-Status-Type}.query}"
+
+        type {
+            start {
+                query = "\
+                    INSERT INTO ${acct_table1} \
+                        (acctsessionid, acctuniqueid, username, \
+                         realm, nasipaddress, nasportid, \
+                         nasporttype, acctstarttime, \
+                         acctupdatetime, acctstoptime, \
+                         acctsessiontime, acctauthentic, \
+                         connectinfo_start, connectinfo_stop, \
+                         acctinputoctets, acctoutputoctets, \
+                         calledstationid, callingstationid, \
+                         acctterminatecause, servicetype, \
+                         framedprotocol, framedipaddress) \
+                    VALUES \
+                        ('%{Acct-Session-Id}', \
+                         '%{Acct-Unique-Session-Id}', \
+                         '%{SQL-User-Name}', \
+                         '%{Realm}', \
+                         '%{NAS-IP-Address}', \
+                         '%{%{NAS-Port-ID}:-%{NAS-Port}}', \
+                         '%{NAS-Port-Type}', \
+                         FROM_UNIXTIME(%{integer:Event-Timestamp}), \
+                         FROM_UNIXTIME(%{integer:Event-Timestamp}), \
+                         NULL, \
+                         '0', \
+                         '%{Acct-Authentic}', \
+                         '%{Connect-Info}', \
+                         '', \
+                         '0', \
+                         '0', \
+                         '%{Called-Station-Id}', \
+                         '%{Calling-Station-Id}', \
+                         '', \
+                         '%{Service-Type}', \
+                         '%{Framed-Protocol}', \
+                         '%{Framed-IP-Address}')"
+            }
+
+            interim-update {
+                query = "\
+                    UPDATE ${acct_table1} SET \
+                        acctupdatetime = FROM_UNIXTIME(%{integer:Event-Timestamp}), \
+                        acctinterval = %{%{Acct-Delay-Time}:-0} + %{Acct-Session-Time}, \
+                        framedipaddress = '%{Framed-IP-Address}', \
+                        acctsessiontime = %{Acct-Session-Time}, \
+                        acctinputoctets = '%{%{Acct-Input-Gigawords}:-0}' << 32 | '%{%{Acct-Input-Octets}:-0}', \
+                        acctoutputoctets = '%{%{Acct-Output-Gigawords}:-0}' << 32 | '%{%{Acct-Output-Octets}:-0}' \
+                    WHERE acctsessionid = '%{Acct-Session-Id}' \
+                    AND username = '%{SQL-User-Name}' \
+                    AND nasipaddress = '%{NAS-IP-Address}'"
+            }
+
+            stop {
+                query = "\
+                    UPDATE ${acct_table1} SET \
+                        acctstoptime = FROM_UNIXTIME(%{integer:Event-Timestamp}), \
+                        acctsessiontime = %{Acct-Session-Time}, \
+                        acctinputoctets = '%{%{Acct-Input-Gigawords}:-0}' << 32 | '%{%{Acct-Input-Octets}:-0}', \
+                        acctoutputoctets = '%{%{Acct-Output-Gigawords}:-0}' << 32 | '%{%{Acct-Output-Octets}:-0}', \
+                        acctterminatecause = '%{Acct-Terminate-Cause}', \
+                        connectinfo_stop = '%{Connect-Info}' \
+                    WHERE acctsessionid = '%{Acct-Session-Id}' \
+                    AND username = '%{SQL-User-Name}' \
+                    AND nasipaddress = '%{NAS-IP-Address}'"
+            }
+        }
+    }
+
+    # Post-auth logging
+    post-auth {
+        query = "\
+            INSERT INTO ${postauth_table} \
+                (username, pass, reply, authdate) \
+            VALUES \
+                ('%{SQL-User-Name}', \
+                 '%{%{User-Password}:-%{Chap-Password}}', \
+                 '%{reply:Packet-Type}', \
+                 NOW())"
+    }
+}

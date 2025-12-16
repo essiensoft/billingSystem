@@ -81,6 +81,44 @@ services:
   #   networks:
   #     - phpnuxbill-network
 
+  # FreeRADIUS Server for RADIUS authentication
+  # Provides AAA (Authentication, Authorization, Accounting) services
+  freeradius:
+    image: freeradius/freeradius-server:latest
+    container_name: phpnuxbill-freeradius
+    restart: unless-stopped
+    ports:
+      - "1812:1812/udp" # Authentication
+      - "1813:1813/udp" # Accounting  
+      - "3799:3799/udp" # CoA/Disconnect
+    environment:
+      - TZ=${TZ:-UTC}
+      - DB_USER=${DB_USER:-phpnuxbill_user}
+      - DB_PASS=${DB_PASS:-ChangeThisPassword}
+      - DB_NAME=${DB_NAME:-phpnuxbill}
+    volumes:
+      # FreeRADIUS configuration files
+      - ./freeradius/mods-available/sql:/etc/freeradius/3.0/mods-available/sql:rw
+      - ./freeradius/mods-available/sqlcounter:/etc/freeradius/3.0/mods-available/sqlcounter:ro
+      - ./freeradius/sites-available/default:/etc/freeradius/3.0/sites-available/default:ro
+      - ./freeradius/clients.conf:/etc/freeradius/3.0/clients.conf:ro
+      - ./freeradius/mods-config/sql/counter/mysql/:/etc/freeradius/3.0/mods-config/sql/counter/mysql/:ro
+      - ./freeradius/configure-freeradius.sh:/docker-entrypoint.d/configure-freeradius.sh:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - phpnuxbill-network
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'Message-Authenticator = 0x00' | radclient -t 2 127.0.0.1:1812 status testing123 || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Run FreeRADIUS in foreground with debug output initially
+    # Change to just "freeradius" for production (less logging)
+    command: [ "freeradius", "-X" ]
+
   # Certbot for SSL Certificate Renewal
   # NOTE: Run setup-ssl.sh ONCE first to obtain initial certificates
   # This container handles automatic renewals only
