@@ -211,7 +211,10 @@ switch ($action) {
                     $trx->payment_method = '';
                     $trx->payment_channel = '';
                     $trx->created_date = date('Y-m-d H:i:s');
-                    $trx->expired_date = date('Y-m-d H:i:s', strtotime('+6 hours'));
+                    
+                    // Use configurable expiry time (default 6 hours)
+                    $expiryHours = $config['guest_transaction_expiry_hours'] ?? 6;
+                    $trx->expired_date = date('Y-m-d H:i:s', strtotime("+{$expiryHours} hours"));
                     $trx->pg_request = json_encode(['email' => $email, 'phonenumber' => $phonenumber, 'guest_purchase' => true]);
                     $trx->status = 1; // Unpaid
                     $trx->save();
@@ -324,6 +327,124 @@ switch ($action) {
                     r2(getUrl('login'), 'e', Lang::T('An error occurred while loading transaction details. Please try again.'));
                 }
                 break;
+
+            case 'resend':
+                // Resend voucher code via email/SMS
+                $trx_id = $routes['3'] ?? '';
+                $method = _post('method'); // 'email' or 'sms'
+                
+                try {
+                    $trx = ORM::for_table('tbl_payment_gateway')->find_one($trx_id);
+                    
+                    if (!$trx || $trx['status'] != 2) {
+                        r2(getUrl('login'), 'e', Lang::T('Transaction not found or not paid'));
+                    }
+                    
+                    // Get voucher code from response
+                    $pg_response = json_decode($trx['pg_paid_response'], true);
+                    $voucher_code = $pg_response['voucher_code'] ?? null;
+                    
+                    if (!$voucher_code) {
+                        r2(getUrl('guest/order/view/') . $trx_id, 'e', Lang::T('Voucher code not found'));
+                    }
+                    
+                    $voucher = ORM::for_table('tbl_voucher')
+                        ->where('code', $voucher_code)
+                        ->find_one();
+                    
+                    if (!$voucher) {
+                        r2(getUrl('guest/order/view/') . $trx_id, 'e', Lang::T('Voucher not found'));
+                    }
+                    
+                    $plan = ORM::for_table('tbl_plans')->find_one($voucher['id_plan']);
+                    $email = GuestPurchase::getGuestEmail($trx);
+                    $phone = GuestPurchase::getGuestPhoneNumber($trx);
+                    
+                    $result = false;
+                    $msg = '';
+                    
+                    if ($method === 'email' && !empty($email)) {
+                        $result = GuestPurchase::sendVoucherEmail($voucher, $plan, $email, $trx);
+                        $msg = $result ? 'Email sent successfully!' : 'Failed to send email. Please try again.';
+                    } elseif ($method === 'sms' && !empty($phone)) {
+                        $result = GuestPurchase::sendVoucherSMS($voucher, $plan, $phone, $trx);
+                        $msg = $result ? 'SMS sent successfully!' : 'Failed to send SMS. Please try again.';
+                    } else {
+                        $msg = 'Invalid method or contact information not available';
+                    }
+                    
+                    _log("Guest purchase resend: Method={$method}, Transaction={$trx_id}, Result=" . ($result ? 'success' : 'failed'));
+                    r2(getUrl('guest/order/view/') . $trx_id, $result ? 's' : 'e', Lang::T($msg));
+                    
+                } catch (Exception $e) {
+                    _log('Guest purchase resend error: ' . $e->getMessage());
+                    r2(getUrl('login'), 'e', Lang::T('An error occurred while resending voucher. Please try again.'));
+                }
+                break;
+
+            case 'check-ajax':
+                // AJAX endpoint for payment status check
+                $trx_id = $routes['3'] ?? '';
+                
+                try {
+                    $trx = ORM::for_table('tbl_payment_gateway')->find_one($trx_id);
+                    
+                    if (!$trx) {
+                        header('Content-Type: application/json');
+                        echo json_encode(['status' => 'error', 'message' => 'Transaction not found']);
+                        die();
+                    }
+                    
+                    // Check payment status via gateway
+                    $gateway = $trx['gateway'];
+                    $gateway_file = $PAYMENTGATEWAY_PATH . DIRECTORY_SEPARATOR . $gateway . '.php';
+                    
+                    if (file_exists($gateway_file)) {
+                        require_once $gateway_file;
+                        $status_function = $gateway . '_get_status';
+                        
+                        if (function_exists($status_function)) {
+                            try {
+                                $status_function($trx, null);
+                                
+                                // Reload transaction
+                                $trx = ORM::for_table('tbl_payment_gateway')->find_one($trx_id);
+                                
+                                $statusMap = [
+                                    1 => 'pending',
+                                    2 => 'paid',
+                                    3 => 'failed',
+                                    4 => 'cancelled'
+                                ];
+                                
+                                header('Content-Type: application/json');
+                                echo json_encode([
+                                    'status' => $statusMap[$trx['status']] ?? 'unknown',
+                                    'transaction_id' => $trx_id
+                                ]);
+                                die();
+                                
+                            } catch (Exception $e) {
+                                _log('Guest purchase AJAX check error: ' . $e->getMessage());
+                                header('Content-Type: application/json');
+                                echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+                                die();
+                            }
+                        }
+                    }
+                    
+                    header('Content-Type: application/json');
+                    echo json_encode(['status' => 'error', 'message' => 'Gateway not available']);
+                    die();
+                    
+                } catch (Exception $e) {
+                    _log('Guest purchase AJAX error: ' . $e->getMessage());
+                    header('Content-Type: application/json');
+                    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+                    die();
+                }
+                break;
+
 
             default:
                 r2(getUrl('login'));

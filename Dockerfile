@@ -83,6 +83,21 @@ RUN mkdir -p /var/www/html/ui/compiled \
     && chmod -R 777 /var/www/html/ui/cache \
     && chmod -R 777 /var/www/html/system/uploads
 
+# Create backup of uploads directory (for volume mounting)
+RUN mkdir -p /var/www/html_backup/system \
+    && cp -r /var/www/html/system/uploads /var/www/html_backup/system/
+
+# Install and configure cron for guest purchase cleanup
+RUN apt-get update && apt-get install -y cron \
+    && rm -rf /var/lib/apt/lists/* \
+    && chmod +x /var/www/html/system/cron/cleanup_guest_transactions.php \
+    && echo "0 2 * * * www-data php /var/www/html/system/cron/cleanup_guest_transactions.php >> /var/log/guest_cleanup.log 2>&1" > /etc/cron.d/guest-cleanup \
+    && chmod 0644 /etc/cron.d/guest-cleanup \
+    && crontab /etc/cron.d/guest-cleanup \
+    && touch /var/log/guest_cleanup.log \
+    && chown www-data:www-data /var/log/guest_cleanup.log
+
+
 # Create encryption key if not exists
 RUN if [ ! -f /var/www/html/.encryption_key ]; then \
     php -r "echo bin2hex(random_bytes(32));" > /var/www/html/.encryption_key; \

@@ -314,6 +314,8 @@
                                         href="{Text::url('settings/app')}">{Lang::T('General Settings')}</a></li>
                                 <li {if $_routes[1] eq 'localisation' }class="active" {/if}><a
                                         href="{Text::url('settings/localisation')}">{Lang::T('Localisation')}</a></li>
+                                <li {if $_routes[1] eq 'guest-purchase' }class="active" {/if}><a
+                                        href="{Text::url('settings/guest-purchase')}">Guest Purchase</a></li>
                                 <li {if $_routes[0] eq 'customfield' }class="active" {/if}><a
                                         href="{Text::url('customfield')}">{Lang::T('Custom Fields')}</a></li>
                                 <li {if $_routes[1] eq 'miscellaneous' }class="active" {/if}><a
