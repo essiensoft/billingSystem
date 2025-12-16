@@ -62,24 +62,23 @@ services:
       retries: 5
       start_period: 30s
     command: --default-authentication-plugin=mysql_native_password
-
   # phpMyAdmin (Optional - for database management)
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: phpnuxbill-phpmyadmin
-    restart: unless-stopped
-    environment:
-      - PMA_HOST=mysql
-      - PMA_PORT=3306
-      - PMA_USER=root
-      - PMA_PASSWORD=${MYSQL_ROOT_PASSWORD:-ChangeThisRootPassword}
-      - UPLOAD_LIMIT=20M
-    ports:
-      - "8081:80"
-    depends_on:
-      - mysql
-    networks:
-      - phpnuxbill-network
+  # phpmyadmin:
+  #   image: phpmyadmin:latest
+  #   container_name: phpnuxbill-phpmyadmin
+  #   restart: unless-stopped
+  #   environment:
+  #     - PMA_HOST=mysql
+  #     - PMA_PORT=3306
+  #     - PMA_USER=root
+  #     - PMA_PASSWORD=${MYSQL_ROOT_PASSWORD:-ChangeThisRootPassword}
+  #     - UPLOAD_LIMIT=20M
+  #   ports:
+  #     - "8081:80"
+  #   depends_on:
+  #     - mysql
+  #   networks:
+  #     - phpnuxbill-network
 
 volumes:
   mysql-data:
