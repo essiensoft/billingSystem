@@ -15,21 +15,33 @@ Everything is now automated! The system will:
 3. ✅ Configure FreeRADIUS with your DB credentials
 4. ✅ Enable SQL and SQLCounter modules
 
-### Step 1: Verify Your .env File
+### Step 1: Configure Your .env File
 
-Check that your `.env` has these variables:
+Copy the example file and configure it:
 
 ```bash
-cat .env
+cp .env.production.example .env
+nano .env
 ```
 
 Required variables:
 ```bash
+# Database Configuration
 DB_NAME=phpnuxbill
 DB_USER=phpnuxbill_user
 DB_PASS=your_secure_password
 MYSQL_ROOT_PASSWORD=your_root_password
+
+# FreeRADIUS Configuration
+RADIUS_SECRET=your_radius_secret
+RADIUS_CLIENT=0.0.0.0/0
+RADIUS_LOG_AUTH=no
 ```
+
+**Security Tips:**
+- Generate strong RADIUS secret: `openssl rand -hex 16`
+- For production, use specific IP instead of `0.0.0.0/0` (e.g., `192.168.1.1` or `192.168.1.0/24`)
+- Set `RADIUS_LOG_AUTH=no` in production to reduce log volume
 
 ### Step 2: Deploy the Stack
 
@@ -91,31 +103,64 @@ docker exec phpnuxbill-freeradius \
 
 ## Configuration Files
 
-All configuration is automatic, but you can customize:
+All configuration is automatic via environment variables:
 
 | File | Purpose | Auto-Configured |
 |------|---------|-----------------|
 | `freeradius/mods-available/sql` | DB connection | ✅ Yes (from .env) |
-| `freeradius/clients.conf` | NAS clients | ⚠️ Manual (add your routers) |
+| `freeradius/clients.conf` | NAS clients | ✅ Yes (from .env) |
 | `freeradius/sites-available/default` | Auth/Acct rules | ✅ Yes |
 | `scripts/init-radius-db.sh` | DB initialization | ✅ Auto-runs |
 
+## Environment Variables
+
+### RADIUS_SECRET
+Shared secret for authenticating NAS devices (MikroTik routers, etc.).
+- **Default**: `pnb123` (change this!)
+- **Generate**: `openssl rand -hex 16`
+- **Important**: Use the same secret on your MikroTik router
+
+### RADIUS_CLIENT
+IP address or network allowed to connect as RADIUS client.
+- **Default**: `0.0.0.0/0` (allows all IPs)
+- **Production**: Use specific IP (e.g., `192.168.1.1`) or network (e.g., `192.168.1.0/24`)
+- **Examples**:
+  - Single router: `192.168.1.1`
+  - Multiple routers: `192.168.1.0/24`
+  - All IPs (testing only): `0.0.0.0/0`
+
+### RADIUS_LOG_AUTH
+Whether to log authentication attempts.
+- **Options**: `yes`, `no`
+- **Default**: `no`
+- **Production**: Set to `no` to reduce log volume
+
 ## Adding NAS Clients (MikroTik Routers)
 
-### Option 1: Via PHPNuxBill Admin (Recommended)
+### Default Configuration (Automatic)
+The default NAS client is automatically configured from your `.env` file:
+- **IP/Network**: Set via `RADIUS_CLIENT` environment variable
+- **Secret**: Set via `RADIUS_SECRET` environment variable
+
+This is perfect for simple setups with one or a few routers on the same network.
+
+### Option 1: Via PHPNuxBill Admin (Recommended for Multiple Routers)
 1. Login to PHPNuxBill admin panel
 2. Go to **Network → Routers**
 3. Add router with type **Radius**
-4. Entries are stored in the `nas` table
+4. Entries are stored in the `nas` table and automatically loaded by FreeRADIUS
 
-### Option 2: Edit clients.conf
+### Option 2: Edit clients.conf (Advanced)
+For complex setups, you can add additional clients manually.
+
 Edit `freeradius/clients.conf`:
 
 ```text
-client mikrotik-main {
-    ipaddr = 192.168.1.1
-    secret = YourRadiusSecret
-    shortname = mikrotik-main
+# Additional MikroTik router
+client mikrotik-branch {
+    ipaddr = 192.168.2.1
+    secret = AnotherSecretHere
+    shortname = mikrotik-branch
     nas_type = mikrotik
 }
 ```

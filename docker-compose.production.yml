@@ -96,6 +96,10 @@ services:
       - DB_USER=${DB_USER:-phpnuxbill_user}
       - DB_PASS=${DB_PASS:-ChangeThisPassword}
       - DB_NAME=${DB_NAME:-phpnuxbill}
+      # FreeRADIUS configuration
+      - RADIUS_SECRET=${RADIUS_SECRET:-pnb123}
+      - RADIUS_CLIENT=${RADIUS_CLIENT:-0.0.0.0/0}
+      - RADIUS_LOG_AUTH=${RADIUS_LOG_AUTH:-no}
     volumes:
       # FreeRADIUS configuration files
       - ./freeradius/mods-available/sql:/etc/freeradius/3.0/mods-available/sql:rw
