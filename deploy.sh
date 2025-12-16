@@ -12,7 +12,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-DOCKER_IMAGE="yourusername/phpnuxbill"
+DOCKER_IMAGE="scorpionkingca/phpnuxbill"
 VERSION="1.0.0"
 COMPOSE_FILE="docker-compose.production.yml"
 
