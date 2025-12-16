@@ -127,9 +127,9 @@ RUN { \
     echo 'Options -Indexes'; \
     echo ''; \
     echo '# Protect sensitive files'; \
-    echo '\u003cFilesMatch "\\.(htaccess|htpasswd|ini|log|sh|sql|key)$"\u003e'; \
+    echo '<FilesMatch "\\.(htaccess|htpasswd|ini|log|sh|sql|key)$">'; \
     echo '    Require all denied'; \
-    echo '\u003c/FilesMatch\u003e'; \
+    echo '</FilesMatch>'; \
     } > /etc/apache2/conf-available/security-headers.conf
 
 RUN a2enconf security-headers
