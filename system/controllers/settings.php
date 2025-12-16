@@ -1173,6 +1173,87 @@ switch ($action) {
         $ui->display('admin/settings/miscellaneous.tpl');
         break;
 
+    case 'guest-purchase':
+        if (!in_array($admin['user_type'], ['SuperAdmin', 'Admin'])) {
+            _alert(Lang::T('You do not have permission to access this page'), 'danger', "dashboard");
+        }
+
+        // Ensure default values exist
+        $guest_settings = [
+            'guest_auto_activate' => 'yes',
+            'guest_allowed_plan_types' => 'Hotspot',
+            'guest_transaction_expiry_hours' => '6',
+            'guest_transaction_cleanup_days' => '30'
+        ];
+
+        foreach ($guest_settings as $setting => $default) {
+            if (!isset($config[$setting])) {
+                $config[$setting] = $default;
+            }
+        }
+
+        $csrf_token = Csrf::generateAndStoreToken();
+        $ui->assign('csrf_token', $csrf_token);
+        $ui->assign('_c', $config);
+        $ui->assign('_title', Lang::T('Guest Purchase Settings'));
+        $ui->display('admin/settings/guest-purchase.tpl');
+        break;
+
+    case 'guest-purchase-post':
+        if (!in_array($admin['user_type'], ['SuperAdmin', 'Admin'])) {
+            _alert(Lang::T('You do not have permission to access this page'), 'danger', "dashboard");
+        }
+
+        if ($_app_stage == 'Demo') {
+            r2(getUrl('settings/guest-purchase'), 'e', 'You cannot perform this action in Demo mode');
+        }
+
+        $csrf_token = _post('csrf_token');
+        if (!Csrf::check($csrf_token)) {
+            r2(getUrl('settings/guest-purchase'), 'e', Lang::T('Invalid or Expired CSRF Token') . ".");
+        }
+
+        // Save guest purchase settings
+        $guest_auto_activate = _post('guest_auto_activate', 'no');
+        $guest_allowed_plan_types = _post('guest_allowed_plan_types', 'Hotspot');
+        $guest_transaction_expiry_hours = _post('guest_transaction_expiry_hours', '6');
+        $guest_transaction_cleanup_days = _post('guest_transaction_cleanup_days', '30');
+
+        // Validate inputs
+        if (!is_numeric($guest_transaction_expiry_hours) || $guest_transaction_expiry_hours < 1) {
+            r2(getUrl('settings/guest-purchase'), 'e', 'Transaction expiry must be a positive number');
+        }
+
+        if (!is_numeric($guest_transaction_cleanup_days) || $guest_transaction_cleanup_days < 1) {
+            r2(getUrl('settings/guest-purchase'), 'e', 'Cleanup retention must be a positive number');
+        }
+
+        // Save settings
+        $settings = [
+            'guest_auto_activate' => $guest_auto_activate,
+            'guest_allowed_plan_types' => $guest_allowed_plan_types,
+            'guest_transaction_expiry_hours' => $guest_transaction_expiry_hours,
+            'guest_transaction_cleanup_days' => $guest_transaction_cleanup_days
+        ];
+
+        foreach ($settings as $key => $value) {
+            $d = ORM::for_table('tbl_appconfig')->where('setting', $key)->find_one();
+            if ($d) {
+                $d->value = $value;
+                $d->save();
+            } else {
+                $d = ORM::for_table('tbl_appconfig')->create();
+                $d->setting = $key;
+                $d->value = $value;
+                $d->save();
+            }
+        }
+
+        _log('[' . $admin['username'] . ']: Guest Purchase Settings Saved', $admin['user_type'], $admin['id']);
+        r2(getUrl('settings/guest-purchase'), 's', Lang::T('Settings Saved Successfully'));
+        break;
+
+
     default:
         $ui->display('admin/404.tpl');
 }

@@ -13,9 +13,10 @@ class GuestPurchase
      * @param object $transaction - Payment gateway transaction record
      * @param string $email - Guest email address
      * @param string $phonenumber - Guest phone number (optional)
+     * @param bool|null $autoActivate - Whether to auto-activate voucher (null = use config)
      * @return string|false - Voucher code or false on failure
      */
-    public static function generateVoucher($transaction, $email = '', $phonenumber = '')
+    public static function generateVoucher($transaction, $email = '', $phonenumber = '', $autoActivate = null)
     {
         global $config;
 
@@ -93,24 +94,49 @@ class GuestPurchase
                 return false;
             }
 
-            // Send voucher via email if email is provided
-            if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $emailSent = self::sendVoucherEmail($voucher, $plan, $email, $transaction);
-                if (!$emailSent) {
-                    _log("GuestPurchase Warning: Voucher {$voucher_code} created but email delivery failed to {$email}");
-                }
-            } else {
-                _log("GuestPurchase Warning: No valid email provided for voucher {$voucher_code}, email notification skipped");
+            // Check if auto-activation is enabled
+            if ($autoActivate === null) {
+                $autoActivate = ($config['guest_auto_activate'] ?? 'no') === 'yes';
             }
 
-            // Send voucher via SMS if phone number is provided
-            if (!empty($phonenumber)) {
-                $smsSent = self::sendVoucherSMS($voucher, $plan, $phonenumber, $transaction);
-                if (!$smsSent) {
-                    _log("GuestPurchase Warning: Voucher {$voucher_code} created but SMS delivery failed to {$phonenumber}");
+            // Auto-activate voucher if enabled
+            if ($autoActivate) {
+                $activationResult = self::autoActivateVoucher($voucher, $transaction, $plan, $email, $phonenumber);
+                
+                if ($activationResult) {
+                    _log("GuestPurchase Success: Voucher {$voucher_code} auto-activated successfully");
+                    // Send activation confirmation instead of voucher code
+                    self::sendActivationConfirmation($activationResult['customer'], $voucher, $plan, $email, $phonenumber);
+                } else {
+                    _log("GuestPurchase Warning: Voucher {$voucher_code} created but auto-activation failed, sending voucher code instead");
+                    // Fall back to sending voucher code
+                    if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        self::sendVoucherEmail($voucher, $plan, $email, $transaction);
+                    }
+                    if (!empty($phonenumber)) {
+                        self::sendVoucherSMS($voucher, $plan, $phonenumber, $transaction);
+                    }
                 }
             } else {
-                _log("GuestPurchase Warning: No phone number provided for voucher {$voucher_code}, SMS notification skipped");
+                // Send voucher via email if email is provided
+                if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $emailSent = self::sendVoucherEmail($voucher, $plan, $email, $transaction);
+                    if (!$emailSent) {
+                        _log("GuestPurchase Warning: Voucher {$voucher_code} created but email delivery failed to {$email}");
+                    }
+                } else {
+                    _log("GuestPurchase Warning: No valid email provided for voucher {$voucher_code}, email notification skipped");
+                }
+
+                // Send voucher via SMS if phone number is provided
+                if (!empty($phonenumber)) {
+                    $smsSent = self::sendVoucherSMS($voucher, $plan, $phonenumber, $transaction);
+                    if (!$smsSent) {
+                        _log("GuestPurchase Warning: Voucher {$voucher_code} created but SMS delivery failed to {$phonenumber}");
+                    }
+                } else {
+                    _log("GuestPurchase Warning: No phone number provided for voucher {$voucher_code}, SMS notification skipped");
+                }
             }
 
             return $voucher_code;
@@ -160,7 +186,7 @@ class GuestPurchase
      * @param object $transaction - Transaction record
      * @return bool - Success status
      */
-    private static function sendVoucherEmail($voucher, $plan, $email, $transaction)
+    public static function sendVoucherEmail($voucher, $plan, $email, $transaction)
     {
         global $config;
 
@@ -326,7 +352,7 @@ class GuestPurchase
      * @param object $transaction - Transaction record
      * @return bool - Success status
      */
-    private static function sendVoucherSMS($voucher, $plan, $phonenumber, $transaction)
+    public static function sendVoucherSMS($voucher, $plan, $phonenumber, $transaction)
     {
         global $config;
 
@@ -377,6 +403,228 @@ class GuestPurchase
             return false;
         }
     }
+
+    /**
+     * Auto-activate a voucher for guest purchase
+     * Creates a temporary customer account and activates the plan
+     *
+     * @param object $voucher - Voucher record
+     * @param object $transaction - Transaction record
+     * @param object $plan - Plan record
+     * @param string $email - Guest email
+     * @param string $phonenumber - Guest phone
+     * @return array|false - Customer data or false on failure
+     */
+    private static function autoActivateVoucher($voucher, $transaction, $plan, $email, $phonenumber)
+    {
+        try {
+            // Create temporary guest customer account
+            $username = 'GUEST-' . $voucher['code'];
+            
+            // Check if customer already exists
+            $customer = ORM::for_table('tbl_customers')
+                ->where('username', $username)
+                ->find_one();
+            
+            if (!$customer) {
+                $customer = ORM::for_table('tbl_customers')->create();
+                $customer->username = $username;
+                $customer->password = $voucher['code']; // Use voucher as password
+                $customer->fullname = 'Guest Customer';
+                $customer->email = $email ?? '';
+                $customer->phonenumber = $phonenumber ?? '';
+                $customer->address = 'Guest Purchase - Auto-Activated';
+                $customer->status = 'Active';
+                $customer->created_by = 0; // System created
+                $customer->save();
+                
+                _log("GuestPurchase: Created guest customer account {$username}");
+            }
+            
+            // Activate the voucher using existing Package::rechargeUser()
+            $result = Package::rechargeUser(
+                $customer['id'],
+                $voucher['routers'],
+                $voucher['id_plan'],
+                'Guest Purchase',
+                $voucher['code']
+            );
+            
+            if ($result) {
+                // Mark voucher as used
+                $voucher->status = '1';
+                $voucher->user = $username;
+                $voucher->used_date = date('Y-m-d H:i:s');
+                $voucher->save();
+                
+                // Update transaction with activation info
+                $pg_response = [
+                    'voucher_code' => $voucher['code'],
+                    'auto_activated' => true,
+                    'username' => $username,
+                    'password' => $voucher['code'],
+                    'activation_time' => date('Y-m-d H:i:s')
+                ];
+                
+                $transaction->pg_paid_response = json_encode($pg_response);
+                $transaction->save();
+                
+                _log("GuestPurchase Success: Auto-activated voucher {$voucher['code']} for customer {$username}");
+                
+                return [
+                    'customer' => $customer,
+                    'voucher' => $voucher,
+                    'invoice' => $result
+                ];
+            }
+            
+            return false;
+            
+        } catch (Exception $e) {
+            _log("GuestPurchase Error: Auto-activation failed - " . $e->getMessage());
+            Message::sendTelegram("Guest Purchase Auto-Activation Failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send activation confirmation with login credentials
+     *
+     * @param object $customer - Customer record
+     * @param object $voucher - Voucher record
+     * @param object $plan - Plan record
+     * @param string $email - Guest email
+     * @param string $phonenumber - Guest phone
+     * @return bool - Success status
+     */
+    private static function sendActivationConfirmation($customer, $voucher, $plan, $email, $phonenumber)
+    {
+        global $config;
+        
+        try {
+            $companyName = $config['CompanyName'] ?? 'Internet Service';
+            
+            // Email message (HTML)
+            if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $emailSubject = Lang::T('Internet Access Activated') . ' - ' . $companyName;
+                
+                $emailMessage = "
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #28a745; color: white; padding: 20px; text-align: center; }
+        .content { background: #f9f9f9; padding: 20px; margin: 20px 0; }
+        .credentials {
+            background: #fff;
+            border: 2px solid #28a745;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .credentials h2 { margin-top: 0; color: #28a745; }
+        .credential-item {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .credential-label { font-weight: bold; color: #666; font-size: 12px; }
+        .credential-value { font-size: 18px; font-family: monospace; color: #333; }
+        .alert-success { background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 15px 0; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>✓ Internet Access Activated!</h1>
+            <p>{$companyName}</p>
+        </div>
+
+        <div class='content'>
+            <h2>Your internet is now ACTIVE!</h2>
+            <p>Dear Customer,</p>
+            <p>Your payment has been confirmed and your internet access has been automatically activated. You can start browsing immediately!</p>
+
+            <div class='credentials'>
+                <h2>Your Login Credentials</h2>
+                <p style='color: #666; font-size: 14px;'>Save these credentials for future use</p>
+                
+                <div class='credential-item'>
+                    <div class='credential-label'>USERNAME</div>
+                    <div class='credential-value'>{$customer['username']}</div>
+                </div>
+                
+                <div class='credential-item'>
+                    <div class='credential-label'>VOUCHER CODE</div>
+                    <div class='credential-value'>{$voucher['code']}</div>
+                </div>
+            </div>
+
+            <div class='alert-success'>
+                <strong>✓ You're all set!</strong><br>
+                Your internet access is active and ready to use. No additional steps required.
+            </div>
+
+            <h3>Package Details:</h3>
+            <table style='width: 100%; background: #fff; padding: 15px;'>
+                <tr>
+                    <td><strong>Package Name:</strong></td>
+                    <td>{$plan['name_plan']}</td>
+                </tr>
+                <tr>
+                    <td><strong>Validity:</strong></td>
+                    <td>{$voucher['validity']} {$voucher['validity_unit']}</td>
+                </tr>
+                <tr>
+                    <td><strong>Amount Paid:</strong></td>
+                    <td>" . Lang::moneyFormat($voucher['price']) . "</td>
+                </tr>
+            </table>
+
+            <p style='margin-top: 20px;'><strong>Note:</strong> Keep these credentials safe. You can use them to log in again if disconnected.</p>
+        </div>
+
+        <div class='footer'>
+            <p>&copy; " . date('Y') . " {$companyName}. All rights reserved.</p>
+            <p>This is an automated email. Please do not reply to this message.</p>
+        </div>
+    </div>
+</body>
+</html>
+                ";
+                
+                Message::sendEmail($email, $emailSubject, $emailMessage);
+                _log("GuestPurchase: Activation confirmation email sent to {$email}");
+            }
+            
+            // SMS message (Plain text)
+            if (!empty($phonenumber)) {
+                $smsMessage = "{$companyName}\n\n";
+                $smsMessage .= "✓ Internet Access ACTIVATED!\n\n";
+                $smsMessage .= "Your Login Credentials:\n";
+                $smsMessage .= "Username: {$customer['username']}\n";
+                $smsMessage .= "Voucher Code: {$voucher['code']}\n\n";
+                $smsMessage .= "Package: {$plan['name_plan']}\n";
+                $smsMessage .= "Validity: {$voucher['validity']} {$voucher['validity_unit']}\n\n";
+                $smsMessage .= "You're online now! Save these credentials for future use.";
+
+                
+                Message::sendSMS($phonenumber, $smsMessage);
+                _log("GuestPurchase: Activation confirmation SMS sent to {$phonenumber}");
+            }
+            
+            return true;
+            
+        } catch (Exception $e) {
+            _log("GuestPurchase Error: Failed to send activation confirmation - " . $e->getMessage());
+            return false;
+        }
+    }
+
 
     /**
      * Get guest email from transaction

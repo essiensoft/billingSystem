@@ -64,8 +64,32 @@
                             <i class="glyphicon glyphicon-home"></i> {Lang::T('Go to Login')}
                         </a>
                     {/if}
+
+                    <!-- Resend Voucher Section -->
+                    <div class="panel panel-default" style="margin-top: 30px;">
+                        <div class="panel-heading">
+                            <strong><i class="glyphicon glyphicon-envelope"></i> {Lang::T("Didn't receive your voucher?")}</strong>
+                        </div>
+                        <div class="panel-body text-center">
+                            <p>{Lang::T('Click below to resend your voucher code')}:</p>
+                            <form method="POST" action="{Text::url('guest/order/resend/')}{$trx['id']}" style="display: inline-block; margin: 5px;">
+                                <input type="hidden" name="method" value="email">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="glyphicon glyphicon-envelope"></i> {Lang::T('Resend via Email')}
+                                </button>
+                            </form>
+                            
+                            <form method="POST" action="{Text::url('guest/order/resend/')}{$trx['id']}" style="display: inline-block; margin: 5px;">
+                                <input type="hidden" name="method" value="sms">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="glyphicon glyphicon-phone"></i> {Lang::T('Resend via SMS')}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
+
 
         {elseif $trx['status'] == 1}
             <!-- Payment Pending -->
@@ -175,4 +199,78 @@
     </div>
 </div>
 
+{if $trx['status'] == 1}
+<!-- Auto-polling script for pending payments -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Auto-check payment status every 10 seconds
+    var checkCount = 0;
+    var maxChecks = 18; // 3 minutes total (18 × 10 seconds)
+    
+    function autoCheckPaymentStatus() {
+        checkCount++;
+        
+        if (checkCount > maxChecks) {
+            console.log('Auto-check stopped after 3 minutes');
+            $('#auto-check-status').html('<i class="glyphicon glyphicon-info-sign"></i> <small>Auto-check stopped. Click "Check Payment Status" to manually verify.</small>');
+            return;
+        }
+        
+        console.log('Auto-checking payment status... (' + checkCount + '/' + maxChecks + ')');
+        
+        // Show loading indicator
+        $('#auto-check-status').html('<i class="glyphicon glyphicon-refresh glyphicon-spin"></i> Checking payment status automatically... (' + checkCount + '/' + maxChecks + ')');
+        
+        // Make AJAX request to check status
+        $.ajax({
+            url: '{Text::url("guest/order/check-ajax/")}{$trx["id"]}',
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'paid') {
+                    // Payment confirmed - reload page
+                    $('#auto-check-status').html('<i class="glyphicon glyphicon-ok-circle"></i> <strong>Payment confirmed! Reloading...</strong>');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else if (response.status === 'pending') {
+                    // Still pending - continue polling
+                    $('#auto-check-status').html('<i class="glyphicon glyphicon-time"></i> Payment pending... Auto-checking (' + checkCount + '/' + maxChecks + ')');
+                    setTimeout(autoCheckPaymentStatus, 10000); // Check again in 10 seconds
+                } else if (response.status === 'failed' || response.status === 'cancelled') {
+                    // Failed or cancelled - reload to show error
+                    $('#auto-check-status').html('<i class="glyphicon glyphicon-remove-circle"></i> <strong>Payment ' + response.status + '. Reloading...</strong>');
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    // Unknown status - retry
+                    setTimeout(autoCheckPaymentStatus, 10000);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX error:', error);
+                // Network error - retry
+                $('#auto-check-status').html('<i class="glyphicon glyphicon-warning-sign"></i> <small>Connection issue. Retrying...</small>');
+                setTimeout(autoCheckPaymentStatus, 10000);
+            }
+        });
+    }
+    
+    // Start auto-checking after 5 seconds
+    setTimeout(autoCheckPaymentStatus, 5000);
+});
+</script>
+
+<div class="row" style="margin-top: 20px;">
+    <div class="col-md-8 col-md-offset-2">
+        <div id="auto-check-status" class="alert alert-info text-center">
+            <i class="glyphicon glyphicon-time"></i> Automatically checking payment status in 5 seconds...
+        </div>
+    </div>
+</div>
+{/if}
+
 {include file="customer/footer-public.tpl"}
+
