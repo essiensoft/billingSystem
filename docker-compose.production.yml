@@ -81,6 +81,21 @@ services:
   #   networks:
   #     - phpnuxbill-network
 
+  # Certbot for SSL Certificate Renewal
+  # NOTE: Run setup-ssl.sh ONCE first to obtain initial certificates
+  # This container handles automatic renewals only
+  certbot:
+    image: certbot/certbot:latest
+    container_name: phpnuxbill-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/lib/letsencrypt:/var/lib/letsencrypt
+      - /opt/mulanet/billingSystem/ssl:/opt/mulanet/billingSystem/ssl
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet && cp /etc/letsencrypt/live/mulanet.cloud/fullchain.pem /opt/mulanet/billingSystem/ssl/ && cp /etc/letsencrypt/live/mulanet.cloud/privkey.pem /opt/mulanet/billingSystem/ssl/ && chmod 644 /opt/mulanet/billingSystem/ssl/*.pem; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+    networks:
+      - phpnuxbill-network
+
 volumes:
   mysql-data:
     driver: local
