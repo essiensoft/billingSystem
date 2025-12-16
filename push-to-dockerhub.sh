@@ -66,40 +66,52 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
-echo -e "${GREEN}Step 2: Building Docker image...${NC}"
-docker build -t phpnuxbill-app:latest -f Dockerfile .
+echo -e "${GREEN}Step 2: Setting up Docker buildx for multi-platform builds...${NC}"
+# Create a new builder instance if it doesn't exist
+if ! docker buildx inspect phpnuxbill-builder > /dev/null 2>&1; then
+    echo "  Creating new buildx builder..."
+    docker buildx create --name phpnuxbill-builder --use
+else
+    echo "  Using existing buildx builder..."
+    docker buildx use phpnuxbill-builder
+fi
+
+# Bootstrap the builder
+docker buildx inspect --bootstrap
+
+echo ""
+echo -e "${GREEN}Step 3: Building multi-platform Docker image...${NC}"
+echo "  Building for: linux/amd64, linux/arm64"
+echo "  This may take several minutes..."
+
+# Build and push for multiple platforms
+docker buildx build \
+    --platform linux/amd64,linux/arm64 \
+    -t $FULL_IMAGE_NAME \
+    -f Dockerfile \
+    --push \
+    .
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Error: Docker build failed${NC}"
     exit 1
 fi
 
-echo ""
-echo -e "${GREEN}Step 3: Tagging image for Docker Hub...${NC}"
-docker tag phpnuxbill-app:latest $FULL_IMAGE_NAME
-
-# Also tag as latest if version is not latest
-if [ "$VERSION_TAG" != "latest" ]; then
-    docker tag phpnuxbill-app:latest ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
-    echo "  Tagged as: ${DOCKER_USERNAME}/${IMAGE_NAME}:latest"
-fi
-
-echo "  Tagged as: $FULL_IMAGE_NAME"
-
-echo ""
-echo -e "${GREEN}Step 4: Pushing to Docker Hub...${NC}"
-docker push $FULL_IMAGE_NAME
-
-if [ $? -ne 0 ]; then
-    echo -e "${RED}Error: Docker push failed${NC}"
-    exit 1
-fi
-
-# Push latest tag if version is not latest
+# Also push as latest if version is not latest
 if [ "$VERSION_TAG" != "latest" ]; then
     echo ""
-    echo -e "${GREEN}Step 5: Pushing 'latest' tag to Docker Hub...${NC}"
-    docker push ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
+    echo -e "${GREEN}Step 4: Pushing 'latest' tag to Docker Hub...${NC}"
+    docker buildx build \
+        --platform linux/amd64,linux/arm64 \
+        -t ${DOCKER_USERNAME}/${IMAGE_NAME}:latest \
+        -f Dockerfile \
+        --push \
+        .
+    
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: Docker push for 'latest' tag failed${NC}"
+        exit 1
+    fi
 fi
 
 echo ""
