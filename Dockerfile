@@ -83,10 +83,6 @@ RUN mkdir -p /var/www/html/ui/compiled \
     && chmod -R 777 /var/www/html/ui/cache \
     && chmod -R 777 /var/www/html/system/uploads
 
-# Create backup of uploads directory (for volume mounting)
-RUN mkdir -p /var/www/html_backup/system \
-    && cp -r /var/www/html/system/uploads /var/www/html_backup/system/
-
 # Install and configure cron for guest purchase cleanup
 RUN apt-get update && apt-get install -y cron \
     && rm -rf /var/lib/apt/lists/* \
@@ -96,6 +92,14 @@ RUN apt-get update && apt-get install -y cron \
     && crontab /etc/cron.d/guest-cleanup \
     && touch /var/log/guest_cleanup.log \
     && chown www-data:www-data /var/log/guest_cleanup.log
+
+# Create backup of uploads directory (for volume mounting) - MUST BE AFTER ALL APT OPERATIONS
+RUN mkdir -p /var/www/html_backup/system/uploads \
+    && cp -rv /var/www/html/system/uploads/* /var/www/html_backup/system/uploads/ \
+    && echo "Backup created. Files in backup:" \
+    && ls -la /var/www/html_backup/system/uploads/ \
+    && echo "Total files backed up:" \
+    && find /var/www/html_backup/system/uploads/ -type f | wc -l
 
 
 # Create encryption key if not exists

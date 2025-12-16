@@ -1,13 +1,43 @@
 #!/bin/bash
 set -e
 
-# Wait for MySQL to be ready
+# Wait for MySQL to be ready with timeout
 echo "Waiting for MySQL to be ready..."
+echo "Database Host: ${DB_HOST}"
+echo "Database Port: ${DB_PORT}"
+echo "Database Name: ${DB_NAME}"
+echo "Database User: ${DB_USER}"
+
+MAX_RETRIES=30
+RETRY_COUNT=0
+
 until php -r "new PDO('mysql:host=${DB_HOST};port=${DB_PORT}', '${DB_USER}', '${DB_PASS}');" 2>/dev/null; do
-    echo "MySQL is unavailable - sleeping"
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    
+    if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+        echo "❌ ERROR: MySQL did not become available after ${MAX_RETRIES} attempts (60 seconds)"
+        echo ""
+        echo "Troubleshooting steps:"
+        echo "1. Check if MySQL container is running: docker ps"
+        echo "2. Check MySQL logs for errors"
+        echo "3. Verify environment variables match between phpnuxbill and mysql services"
+        echo "4. Ensure DB_PASS matches MYSQL_PASSWORD"
+        echo "5. Ensure MYSQL_ROOT_PASSWORD is set"
+        echo ""
+        echo "Current configuration:"
+        echo "  DB_HOST=${DB_HOST}"
+        echo "  DB_PORT=${DB_PORT}"
+        echo "  DB_NAME=${DB_NAME}"
+        echo "  DB_USER=${DB_USER}"
+        echo ""
+        exit 1
+    fi
+    
+    echo "MySQL is unavailable - sleeping (attempt $RETRY_COUNT/$MAX_RETRIES)"
     sleep 2
 done
-echo "MySQL is ready!"
+
+echo "✅ MySQL is ready!"
 
 # Create config.php if it doesn't exist
 if [ ! -f /var/www/html/config.php ]; then
@@ -96,18 +126,44 @@ try {
 
 # Copy default upload files if they don't exist (fixes Docker volume override)
 echo "Checking default upload files..."
-if [ -d /var/www/html_backup/system/uploads ] && [ ! -f /var/www/html/system/uploads/admin.default.png ]; then
-    echo "Copying default upload files to volume..."
+
+# Check if the backup directory exists
+if [ -d /var/www/html_backup/system/uploads ]; then
+    echo "Backup directory found at /var/www/html_backup/system/uploads"
     
-    # Copy from backup to actual uploads directory (mounted volume)
-    cp -rn /var/www/html_backup/system/uploads/* /var/www/html/system/uploads/ 2>/dev/null || true
+    # List what's in the backup
+    echo "Files in backup:"
+    ls -la /var/www/html_backup/system/uploads/ | head -20
+    
+    # Copy all files from backup to uploads directory
+    echo "Copying default upload files to volume..."
+    cp -rv /var/www/html_backup/system/uploads/* /var/www/html/system/uploads/ 2>&1 || echo "Some files may already exist"
     
     # Set permissions
     chown -R www-data:www-data /var/www/html/system/uploads/
+    chmod -R 755 /var/www/html/system/uploads/
     
-    echo "Default upload files copied successfully!"
+    echo "✅ Default upload files copied successfully!"
+    
+    # Verify critical files
+    echo "Verifying critical files:"
+    for file in admin.default.png notifications.default.json logo.default.png; do
+        if [ -f "/var/www/html/system/uploads/$file" ]; then
+            echo "  ✓ $file exists"
+        else
+            echo "  ✗ $file MISSING!"
+        fi
+    done
 else
-    echo "Default upload files already exist or backup not available, skipping copy."
+    echo "⚠️  Backup directory not found at /var/www/html_backup/system/uploads"
+    echo "Checking if files already exist in volume..."
+    
+    if [ -f /var/www/html/system/uploads/notifications.default.json ]; then
+        echo "✓ Upload files already exist in volume"
+    else
+        echo "❌ ERROR: Upload files missing and no backup available!"
+        echo "This may cause issues with the application."
+    fi
 fi
 
 # Start cron service for automated cleanup
