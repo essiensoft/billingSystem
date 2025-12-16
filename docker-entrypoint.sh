@@ -47,72 +47,67 @@ EOF
     echo "config.php created successfully!"
 fi
 
-# Initialize guest purchase configuration settings
+# Initialize guest purchase configuration settings (only if tables exist)
 echo "Checking guest purchase configuration..."
 php -r "
 try {
     \$db = new PDO('mysql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_NAME};charset=utf8mb4', '${DB_USER}', '${DB_PASS}');
     \$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Check if guest purchase settings exist
-    \$stmt = \$db->prepare('SELECT COUNT(*) FROM tbl_app_config WHERE setting = ?');
-    \$stmt->execute(['guest_auto_activate']);
-    \$exists = \$stmt->fetchColumn();
+    // Check if tbl_app_config table exists
+    \$tables = \$db->query('SHOW TABLES LIKE \"tbl_app_config\"')->fetchAll();
     
-    if (\$exists == 0) {
-        echo \"Installing guest purchase configuration...\\n\";
+    if (count(\$tables) > 0) {
+        // Table exists, check if guest purchase settings exist
+        \$stmt = \$db->prepare('SELECT COUNT(*) FROM tbl_app_config WHERE setting = ?');
+        \$stmt->execute(['guest_auto_activate']);
+        \$exists = \$stmt->fetchColumn();
         
-        // Insert guest purchase settings
-        \$settings = [
-            ['guest_auto_activate', 'yes'],
-            ['guest_allowed_plan_types', 'Hotspot'],
-            ['guest_transaction_expiry_hours', '6'],
-            ['guest_transaction_cleanup_days', '30']
-        ];
-        
-        \$stmt = \$db->prepare('INSERT INTO tbl_app_config (setting, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value=VALUES(value)');
-        
-        foreach (\$settings as \$setting) {
-            \$stmt->execute(\$setting);
-            echo \"  ✓ Added: {\$setting[0]} = {\$setting[1]}\\n\";
+        if (\$exists == 0) {
+            echo \"Installing guest purchase configuration...\n\";
+            
+            // Insert guest purchase settings
+            \$settings = [
+                ['guest_auto_activate', 'yes'],
+                ['guest_allowed_plan_types', 'Hotspot'],
+                ['guest_transaction_expiry_hours', '6'],
+                ['guest_transaction_cleanup_days', '30']
+            ];
+            
+            \$stmt = \$db->prepare('INSERT INTO tbl_app_config (setting, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value=VALUES(value)');
+            
+            foreach (\$settings as \$setting) {
+                \$stmt->execute(\$setting);
+                echo \"  ✓ Added: {\$setting[0]} = {\$setting[1]}\n\";
+            }
+            
+            echo \"Guest purchase configuration installed successfully!\n\";
+        } else {
+            echo \"Guest purchase configuration already exists.\n\";
         }
-        
-        echo \"Guest purchase configuration installed successfully!\\n\";
     } else {
-        echo \"Guest purchase configuration already exists.\\n\";
+        echo \"PHPNuxBill not installed yet. Please complete installation via web interface.\n\";
+        echo \"Visit http://your-domain:8080/install to set up the database.\n\";
     }
 } catch (PDOException \$e) {
-    echo \"Warning: Could not initialize guest purchase config: \" . \$e->getMessage() . \"\\n\";
-    echo \"You may need to run install/guest_purchase_config.sql manually.\\n\";
+    echo \"Note: Database not initialized yet. Please run PHPNuxBill installer.\n\";
 }
 "
 
-
-
-
 # Copy default upload files if they don't exist (fixes Docker volume override)
 echo "Checking default upload files..."
-if [ ! -f /var/www/html/system/uploads/admin.default.png ]; then
+if [ -d /var/www/html_backup/system/uploads ] && [ ! -f /var/www/html/system/uploads/admin.default.png ]; then
     echo "Copying default upload files to volume..."
     
-    # Create temporary backup location
-    TEMP_UPLOADS="/tmp/uploads_backup"
-    mkdir -p $TEMP_UPLOADS
-    
-    # Copy from image to temp (these were copied during Docker build)
-    if [ -d /var/www/html_backup/system/uploads ]; then
-        cp -r /var/www/html_backup/system/uploads/* $TEMP_UPLOADS/
-    fi
-    
-    # Copy to actual uploads directory (mounted volume)
-    cp -rn $TEMP_UPLOADS/* /var/www/html/system/uploads/ 2>/dev/null || true
+    # Copy from backup to actual uploads directory (mounted volume)
+    cp -rn /var/www/html_backup/system/uploads/* /var/www/html/system/uploads/ 2>/dev/null || true
     
     # Set permissions
     chown -R www-data:www-data /var/www/html/system/uploads/
     
     echo "Default upload files copied successfully!"
 else
-    echo "Default upload files already exist, skipping copy."
+    echo "Default upload files already exist or backup not available, skipping copy."
 fi
 
 # Start cron service for automated cleanup
