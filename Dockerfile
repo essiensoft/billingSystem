@@ -127,12 +127,20 @@ RUN { \
     echo 'Options -Indexes'; \
     echo ''; \
     echo '# Protect sensitive files'; \
-    echo '<FilesMatch "\.(htaccess|htpasswd|ini|log|sh|sql|key)$">'; \
+    echo '\u003cFilesMatch "\\.(htaccess|htpasswd|ini|log|sh|sql|key)$"\u003e'; \
     echo '    Require all denied'; \
-    echo '</FilesMatch>'; \
+    echo '\u003c/FilesMatch\u003e'; \
     } > /etc/apache2/conf-available/security-headers.conf
 
 RUN a2enconf security-headers
+
+# Copy Apache SSL configuration
+COPY apache-ssl.conf /etc/apache2/sites-available/default-ssl.conf
+
+# Enable SSL site and required modules
+RUN a2ensite default-ssl \
+    && a2enmod ssl \
+    && a2enmod http2
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
