@@ -310,15 +310,20 @@ switch ($do) {
         run_hook('customer_view_login'); #HOOK
         $csrf_token = Csrf::generateAndStoreToken();
         if ($config['disable_registration'] == 'yes') {
-            // Fetch guest purchase plans (Hotspot plans only, enabled, and sorted by price)
+            // Get allowed plan types from config (default to Hotspot for backward compatibility)
+            $allowedTypesConfig = $config['guest_allowed_plan_types'] ?? 'Hotspot';
+            $allowedTypes = array_map('trim', explode(',', $allowedTypesConfig));
+            
+            // Fetch guest purchase plans (enabled plans of allowed types, sorted by price)
             $guest_plans_raw = ORM::for_table('tbl_plans')
                 ->left_outer_join('tbl_bandwidth', array('tbl_plans.id_bw', '=', 'tbl_bandwidth.id'))
                 ->select('tbl_plans.*')
                 ->select('tbl_bandwidth.name_bw', 'name_bw')
                 ->where('tbl_plans.enabled', '1')
-                ->where('tbl_plans.type', 'Hotspot')
+                ->where_in('tbl_plans.type', $allowedTypes)
                 ->order_by_asc('tbl_plans.price')
                 ->find_array();
+
 
             // Filter plans to only include those with valid, enabled routers
             $guest_plans = [];

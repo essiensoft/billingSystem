@@ -426,6 +426,134 @@
             color: #9CA3AF;
         }
 
+        /* Announcement Styles */
+        .announcement-banner {
+            display: none;
+        }
+
+        .desktop-announcement {
+            position: relative;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-top: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+            max-width: 450px;
+        }
+
+        .desktop-announcement:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .desktop-announcement .announcement-icon {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: white;
+            border-radius: 50%;
+            color: #4F46E5;
+            text-align: center;
+            line-height: 28px;
+            margin-right: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            vertical-align: middle;
+        }
+
+        .desktop-announcement .announcement-text {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+        }
+
+        /* Announcement Modal */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%!;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-backdrop.show {
+            display: block;
+        }
+
+        .announcement-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            overflow: hidden;
+        }
+
+        .announcement-modal.show {
+            display: block;
+        }
+
+        .announcement-modal-header {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .announcement-modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .announcement-modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .announcement-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .announcement-modal-body {
+            padding: 24px;
+            max-height: 60vh;
+            overflow-y: auto;
+            color: #374151;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
         /* Mobile Responsiveness */
         @media (max-width: 1024px) {
             .left-section {
@@ -503,6 +631,50 @@
             .section-title {
                 font-size: 24px;
             }
+
+            .announcement-banner {
+                display: block;
+                background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+                border: 1px solid #93C5FD;
+                border-radius: 12px;
+                padding: 14px 16px;
+                margin-bottom: 24px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .announcement-banner:hover {
+                background: linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            }
+
+            .announcement-banner .banner-icon {
+                display: inline-block;
+                width: 24px;
+                height: 24px;
+                background: #3B82F6;
+                border-radius: 50%;
+                color: white;
+                text-align: center;
+                line-height: 24px;
+                margin-right: 10px;
+                font-size: 14px;
+                font-weight: 700;
+                vertical-align: middle;
+            }
+
+            .announcement-banner .banner-text {
+                display: inline-block;
+                vertical-align: middle;
+                font-size: 14px;
+                font-weight: 600;
+                color: #1E40AF;
+            }
+
+            .desktop-announcement {
+                display: none;
+            }
         }
     {/literal}
     </style>
@@ -526,6 +698,15 @@
                 <div class="illustration-graphic">
                     <img src="{$app_url}/ui/ui/images/wifi-hotspot-login.png" alt="WiFi Login" onerror="this.style.display='none'">
                 </div>
+                
+                <!-- Desktop Announcement Banner -->
+                {$Announcement = "{$PAGES_PATH}/Announcement.html"}
+                {if file_exists($Announcement)}
+                <div class="desktop-announcement" onclick="showAnnouncement()">
+                    <span class="announcement-icon">!</span>
+                    <span class="announcement-text">View Important Announcements</span>
+                </div>
+                {/if}
             </div>
         </div>
 
@@ -540,6 +721,15 @@
             </div>
 
             <div class="content-wrapper">
+                <!-- Mobile Announcement Banner -->
+                {$Announcement = "{$PAGES_PATH}/Announcement.html"}
+                {if file_exists($Announcement)}
+                <div class="announcement-banner" onclick="showAnnouncement()">
+                    <span class="banner-icon">!</span>
+                    <span class="banner-text">View Announcements</span>
+                </div>
+                {/if}
+                
                 <!-- Tab Navigation -->
                 <div class="tab-navigation">
                     <button class="tab-btn active" onclick="switchTab('buy')">
@@ -738,6 +928,23 @@
         </div>
     </div>
 
+    <!-- Announcement Modal -->
+    <div class="modal-backdrop" id="announcementBackdrop" onclick="closeAnnouncement()"></div>
+    <div class="announcement-modal" id="announcementModal">
+        <div class="announcement-modal-header">
+            <h3>Announcements</h3>
+            <button class="announcement-modal-close" onclick="closeAnnouncement()">&times;</button>
+        </div>
+        <div class="announcement-modal-body" id="announcementContent">
+            {$Announcement = "{$PAGES_PATH}/Announcement.html"}
+            {if file_exists($Announcement)}
+                {include file=$Announcement}
+            {else}
+                <p style="text-align: center; color: #6B7280; padding: 20px;">No announcements at this time.</p>
+            {/if}
+        </div>
+    </div>
+
     <script>
     {literal}
         function switchTab(tab) {
@@ -780,6 +987,46 @@
             } else {
                 document.querySelector('.mobile-header').style.display = 'none';
             }
+        });
+
+        // Announcement modal functions
+        function showAnnouncement() {
+            document.getElementById('announcementModal').classList.add('show');
+            document.getElementById('announcementBackdrop').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAnnouncement() {
+            document.getElementById('announcementModal').classList.remove('show');
+            document.getElementById('announcementBackdrop').classList.remove('show');
+            document.body.style.overflow = 'auto';
+            
+            // Update last shown time when user closes modal
+            localStorage.setItem('announcementLastShown', new Date().getTime());
+        }
+
+        // Auto-popup announcement twice per day (every 12 hours)
+        function checkAndShowAnnouncement() {
+            // Check if announcement exists
+            var announcementModal = document.getElementById('announcementModal');
+            if (!announcementModal) return;
+
+            var lastShown = localStorage.getItem('announcementLastShown');
+            var currentTime = new Date().getTime();
+            var twelveHours = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+
+            // Show if never shown before OR if 12 hours have passed
+            if (!lastShown || (currentTime - parseInt(lastShown)) > twelveHours) {
+                // Wait 2 seconds after page load before showing
+                setTimeout(function() {
+                    showAnnouncement();
+                }, 2000);
+            }
+        }
+
+        // Check and auto-show announcement on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAndShowAnnouncement();
         });
     {/literal}
     </script>
