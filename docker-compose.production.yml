@@ -96,6 +96,51 @@ services:
     networks:
       - phpnuxbill-network
 
+  # Cron container for scheduled maintenance tasks
+  # Runs various maintenance jobs on a schedule
+  cron:
+    image: docker:cli
+    container_name: phpnuxbill-cron
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=${TZ:-UTC}
+    entrypoint: |
+      /bin/sh -c '
+      # Create crontab file
+      cat > /etc/crontabs/root << "EOF"
+      # PHPNuxBill scheduled tasks
+      # Format: minute hour day month weekday command
+
+      # Run PHPNuxBill cron every 5 minutes (radius sync, notifications, etc.)
+      */5 * * * * docker exec phpnuxbill-app php /var/www/html/cron.php > /dev/null 2>&1
+
+      # Clean expired sessions daily at 2 AM
+      0 2 * * * docker exec phpnuxbill-app php /var/www/html/system/cron/session_cleanup.php > /dev/null 2>&1
+
+      # Clean old logs weekly on Sunday at 3 AM
+      0 3 * * 0 docker exec phpnuxbill-app find /var/www/html/system/cache -type f -mtime +7 -delete > /dev/null 2>&1
+
+      # Database optimization weekly on Sunday at 4 AM
+      0 4 * * 0 docker exec phpnuxbill-mysql mysqlcheck -o phpnuxbill -u root -p$${MYSQL_ROOT_PASSWORD} > /dev/null 2>&1
+
+      # Backup database daily at 1 AM
+      0 1 * * * docker exec phpnuxbill-mysql mysqldump -u root -p$${MYSQL_ROOT_PASSWORD} phpnuxbill | gzip > /backup/phpnuxbill_$$(date +\%Y\%m\%d).sql.gz 2>/dev/null
+
+      # Reload Apache config to pick up new SSL certs (after certbot renewal)
+      30 */12 * * * docker exec phpnuxbill-app apache2ctl graceful > /dev/null 2>&1
+      EOF
+
+      echo "Cron container started with scheduled tasks"
+      crond -f -d 8
+      '
+    restart: unless-stopped
+    depends_on:
+      - phpnuxbill
+      - mysql
+    networks:
+      - phpnuxbill-network
+
 volumes:
   mysql-data:
     driver: local
