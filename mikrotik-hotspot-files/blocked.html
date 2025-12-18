@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="-1">
+    <title>Mulanet - Access Blocked</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: #dc3545;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .icon::before {
+            content: "⛔";
+            font-size: 40px;
+        }
+
+        h1 {
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+
+        .blocked-url {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #dc3545;
+            margin: 20px 0;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .reason {
+            color: #666;
+            line-height: 1.6;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .reason strong {
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #1976D2;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .info-box li {
+            color: #555;
+            padding: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .info-box li::before {
+            content: "•";
+            color: #2196F3;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .support-link {
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .support-link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .support-link a:hover {
+            text-decoration: underline;
+        }
+
+        .timestamp {
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('timestamp').textContent = now.toLocaleString();
+        }
+        window.onload = function () {
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="icon"></div>
+        <h1>Access Blocked</h1>
+        <p style="color: #666; margin-bottom: 20px;">This website has been blocked by network policy</p>
+
+        <div class="blocked-url">
+            <strong style="font-size: 12px; color: #721c24;">Blocked URL:</strong>
+            $(url)
+        </div>
+
+        <div class="reason">
+            <strong>Reason for blocking:</strong>
+            This site has been restricted based on network security policies and content filtering rules.
+        </div>
+
+        <div class="info-box">
+            <h3>Why was this blocked?</h3>
+            <ul>
+                <li>Torrent and P2P file sharing prohibited</li>
+                <li>Site categorized as restricted content</li>
+                <li>Copyright infringement prevention</li>
+                <li>Bandwidth management policy</li>
+                <li>Network security protection</li>
+            </ul>
+        </div>
+
+        <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107;">
+            <h3 style="color: #856404;">Need access to this site?</h3>
+            <ul style="color: #856404;">
+                <li>Contact network administrator</li>
+                <li>Submit an access request</li>
+                <li>Verify if site is business-critical</li>
+            </ul>
+        </div>
+
+        <a href="javascript:history.back()" class="btn">Go Back</a>
+
+        <div class="support-link">
+            Questions? <a href="https://mulanet.cloud/support">Contact Support</a>
+        </div>
+
+        <div class="timestamp">
+            Blocked at: <span id="timestamp"></span>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="expires" content="-1">
+    <title>Mulanet - WiFi Login</title>
+    $(if error)
+    <meta http-equiv="refresh" content="0; url=$(link-orig)&msg=$(error)&nux-key=$(chap-id)-$(chap-challenge)">
+    $(endif)
+    $(if trial == 'yes')
+    <meta http-equiv="refresh"
+        content="0; url=https://mulanet.cloud/?_route=login&nux-mac=$(mac)&nux-ip=$(ip)&nux-hostname=$(hostname)&nux-router=1&nux-key=$(chap-id)-$(chap-challenge)&trial=yes">
+    $(else)
+    <meta http-equiv="refresh"
+        content="0; url=https://mulanet.cloud/?_route=login&nux-mac=$(mac)&nux-ip=$(ip)&nux-hostname=$(hostname)&nux-router=1&nux-key=$(chap-id)-$(chap-challenge)">
+    $(endif)
+</head>
+
+<body>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h2>Redirecting to Mulanet Login...</h2>
+        <p>Please wait while we redirect you to the login page.</p>
+        <p style="color: #666; font-size: 12px;">If you are not redirected automatically, <a
+                href="https://mulanet.cloud/?_route=login">click here</a>.</p>
+    </div>
+</body>
+
+</html>
