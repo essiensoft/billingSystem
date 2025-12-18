@@ -167,7 +167,8 @@ switch ($do) {
                             _alert(Lang::T('Voucher activation failed'), 'danger', "login");
                         }
                     } else {
-                        _alert(Lang::T('Voucher activation failed'), 'danger', "login");
+                        _log("Voucher activation failed for code: {$voucher}. Package::rechargeUser returned false.");
+                        _alert(Lang::T('Voucher activation failed. The network router may be unavailable. Please contact support.'), 'danger', "login");
                     }
                 } else {
                     _alert(Lang::T('Internet Voucher Expired'), 'danger', "login");
@@ -252,7 +253,8 @@ switch ($do) {
                         // if failed to recharge, restore old password
                         $user->password = $oldPass;
                         $user->save();
-                        r2(getUrl('login'), 'e', Lang::T("Failed to activate voucher"));
+                        _log("Voucher activation failed for code: {$voucher}, username: {$username}. Package::rechargeUser returned false.");
+                        r2(getUrl('login'), 'e', Lang::T("Failed to activate voucher. The network router may be unavailable. Please contact support."));
                     }
                 } else {
                     // used voucher
@@ -332,14 +334,14 @@ switch ($do) {
             foreach ($guest_plans_raw as $plan) {
                 // Check if router exists and is enabled
                 $router = ORM::for_table('tbl_routers')
-                    ->where('id', $plan['routers'])
+                    ->where('name', $plan['routers'])
                     ->where('enabled', '1')
                     ->find_one();
 
                 if ($router) {
                     $guest_plans[] = $plan;
                 } else {
-                    _log("Guest purchase warning: Plan '{$plan['name_plan']}' (ID: {$plan['id']}) has invalid/disabled router ID: {$plan['routers']}");
+                    _log("Guest purchase warning: Plan '{$plan['name_plan']}' (ID: {$plan['id']}) has invalid/disabled router name: {$plan['routers']}");
                 }
             }
 

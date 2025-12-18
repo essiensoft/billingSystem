@@ -39,6 +39,22 @@ class Package
             $isVoucher = true;
         }
 
+        // Validate router exists and is enabled (except for special routers)
+        if ($router_name != 'balance' && $router_name != 'Custom Balance') {
+            $router = ORM::for_table('tbl_routers')
+                ->where('name', $router_name)
+                ->where('enabled', '1')
+                ->find_one();
+            
+            if (!$router) {
+                _log("Package recharge error: Router '{$router_name}' not found or disabled for plan ID {$plan_id}");
+                if (!$isVoucher) {
+                    r2(getUrl('home'), 'e', Lang::T('Network router is unavailable. Please contact support.'));
+                }
+                return false;
+            }
+        }
+
         $p = ORM::for_table('tbl_plans')->where('id', $plan_id)->find_one();
 
         if (!$isVoucher) {
