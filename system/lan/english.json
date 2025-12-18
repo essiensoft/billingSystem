@@ -984,5 +984,16 @@
     "Range_IP": "Range IP",
     "Router": "Router",
     "How_it_works_": "How it works:",
-    "An_error_occurred_while_processing_your_order__Please_try_again_or_contact_support_": "An error occurred while processing your order. Please try again or contact support."
+    "An_error_occurred_while_processing_your_order__Please_try_again_or_contact_support_": "An error occurred while processing your order. Please try again or contact support.",
+    "Guest_Purchase_Settings": "Guest Purchase Settings",
+    "Auto_Activation": "Auto-Activation",
+    "Allowed_Plan_Types": "Allowed Plan Types",
+    "Transaction_Expiry": "Transaction Expiry",
+    "Cleanup_Retention": "Cleanup Retention",
+    "Transaction_Details_": "Transaction Details:",
+    "Amount": "Amount",
+    "Pending": "Pending",
+    "If_you_have_completed_the_payment__click_the_button_below_to_check_status": "If you have completed the payment, click the button below to check status",
+    "Payment_successful_but_contact_information_is_missing__Please_contact_support_with_your_transaction_ID__": "Payment successful but contact information is missing. Please contact support with your transaction ID: ",
+    "Account_Not_Found": "Account Not Found"
 }
