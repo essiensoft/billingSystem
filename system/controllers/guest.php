@@ -212,8 +212,6 @@ switch ($action) {
                     $trx->routers_id = $router['id'];
                     $trx->routers = $router['name'];
                     $trx->price = $total_price;
-                    $trx->tax_rate = $tax_rate;
-                    $trx->tax_amount = $tax_amount;
                     $trx->pg_url_payment = '-';
                     $trx->gateway_trx_id = '';
                     $trx->payment_method = '';
