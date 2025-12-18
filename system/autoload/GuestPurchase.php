@@ -80,6 +80,10 @@ class GuestPurchase
                 $voucher->user = '0'; // Guest voucher (no user assigned)
                 $voucher->status = '0'; // Unused
                 $voucher->generated_by = 0; // System generated
+                $voucher->created_at = date('Y-m-d H:i:s');
+                $voucher->validity = $plan['validity'];
+                $voucher->validity_unit = $plan['validity_unit'];
+                $voucher->price = $transaction['price'];
                 $voucher->save();
 
                 _log("GuestPurchase Success: Voucher {$voucher_code} generated for transaction {$transaction['id']}");
@@ -630,13 +634,6 @@ class GuestPurchase
      */
     public static function getGuestEmail($transaction)
     {
-        // Try pg_paid_response first (stored before payment, preserved after)
-        $pg_paid = json_decode($transaction['pg_paid_response'], true);
-        if (isset($pg_paid['guest_email']) && !empty($pg_paid['guest_email'])) {
-            return $pg_paid['guest_email'];
-        }
-        
-        // Fallback: try pg_request (may be overwritten by Paystack)
         $pg_request = json_decode($transaction['pg_request'], true);
         if (isset($pg_request['email'])) {
             return $pg_request['email'];
@@ -653,13 +650,6 @@ class GuestPurchase
      */
     public static function getGuestPhoneNumber($transaction)
     {
-        // Try pg_paid_response first (stored before payment, preserved after)
-        $pg_paid = json_decode($transaction['pg_paid_response'], true);
-        if (isset($pg_paid['guest_phone']) && !empty($pg_paid['guest_phone'])) {
-            return $pg_paid['guest_phone'];
-        }
-        
-        // Fallback: try pg_request (may be overwritten by Paystack)
         $pg_request = json_decode($transaction['pg_request'], true);
         if (isset($pg_request['phonenumber'])) {
             return $pg_request['phonenumber'];

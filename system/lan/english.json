@@ -995,6 +995,5 @@
     "Pending": "Pending",
     "If_you_have_completed_the_payment__click_the_button_below_to_check_status": "If you have completed the payment, click the button below to check status",
     "Payment_successful_but_contact_information_is_missing__Please_contact_support_with_your_transaction_ID__": "Payment successful but contact information is missing. Please contact support with your transaction ID: ",
-    "Account_Not_Found": "Account Not Found",
-    "Payment_successful_but_voucher_generation_failed__Please_contact_support_immediately_with_transaction_ID__": "Payment successful but voucher generation failed. Please contact support immediately with transaction ID: "
+    "Account_Not_Found": "Account Not Found"
 }
