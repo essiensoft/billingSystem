@@ -981,5 +981,7 @@
     "New_Pool": "New Pool",
     "Name_Pool": "Name Pool",
     "Local_IP": "Local IP",
-    "Range_IP": "Range IP"
+    "Range_IP": "Range IP",
+    "Router": "Router",
+    "How_it_works_": "How it works:"
 }
