@@ -339,6 +339,8 @@ switch ($do) {
                     ->find_one();
 
                 if ($router) {
+                    // Add router_id to plan for use in templates
+                    $plan['router_id'] = $router['id'];
                     $guest_plans[] = $plan;
                 } else {
                     _log("Guest purchase warning: Plan '{$plan['name_plan']}' (ID: {$plan['id']}) has invalid/disabled router name: {$plan['routers']}");

@@ -36,10 +36,16 @@ switch ($action) {
 
             case 'gateway':
                 // Select payment gateway and collect email
-                $router_name = $routes['3'] ?? '';
+                $router_id = $routes['3'] ?? '';
                 $plan_id = $routes['4'] ?? '';
 
                 try {
+                    // Validate router ID
+                    if (empty($router_id) || !is_numeric($router_id)) {
+                        _log('Guest purchase error: Invalid router ID provided');
+                        r2(getUrl('login'), 'e', Lang::T('Invalid router selected. Please try again.'));
+                    }
+
                     if (empty($plan_id) || !is_numeric($plan_id)) {
                         _log('Guest purchase error: Invalid plan ID provided');
                         r2(getUrl('login'), 'e', Lang::T('Invalid plan selected. Please try again.'));
@@ -58,18 +64,13 @@ switch ($action) {
                         r2(getUrl('login'), 'e', Lang::T('The selected plan is not available. Please choose another plan.'));
                     }
 
-                    if (empty($router_name)) {
-                        _log('Guest purchase error: Invalid router name provided');
-                        r2(getUrl('login'), 'e', Lang::T('Invalid router selected. Please try again.'));
-                    }
-
                     $router = ORM::for_table('tbl_routers')
-                        ->where('name', $router_name)
+                        ->where('id', $router_id)
                         ->where('enabled', '1')
                         ->find_one();
 
                     if (!$router) {
-                        _log("Guest purchase error: Router name {$router_name} not found or disabled");
+                        _log("Guest purchase error: Router ID {$router_id} not found or disabled");
                         r2(getUrl('login'), 'e', Lang::T('The selected router is not available. Please contact support.'));
                     }
 
@@ -121,8 +122,9 @@ switch ($action) {
 
             case 'buy':
                 // Create transaction and redirect to payment gateway
-                $router_name = $routes['3'] ?? '';
+                $router_id = $routes['3'] ?? '';
                 $plan_id = $routes['4'] ?? '';
+
 
                 try {
                     $csrf_token = _post('csrf_token');
@@ -138,30 +140,30 @@ switch ($action) {
                     // Validate email
                     if (empty($email)) {
                         _log('Guest purchase error: Email is required but not provided');
-                        r2(getUrl('guest/order/gateway/' . $router_name . '/' . $plan_id), 'e', Lang::T('Email address is required. Please enter your email.'));
+                        r2(getUrl('guest/order/gateway/' . $router_id . '/' . $plan_id), 'e', Lang::T('Email address is required. Please enter your email.'));
                     }
 
                     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         _log("Guest purchase error: Invalid email format - {$email}");
-                        r2(getUrl('guest/order/gateway/' . $router_name . '/' . $plan_id), 'e', Lang::T('Invalid email format. Please enter a valid email address (e.g., name@example.com).'));
+                        r2(getUrl('guest/order/gateway/' . $router_id . '/' . $plan_id), 'e', Lang::T('Invalid email format. Please enter a valid email address (e.g., name@example.com).'));
                     }
 
                     // Validate phone number
                     if (empty($phonenumber)) {
                         _log('Guest purchase error: Phone number is required but not provided');
-                        r2(getUrl('guest/order/gateway/' . $router_name . '/' . $plan_id), 'e', Lang::T('Phone number is required for SMS delivery. Please enter your phone number.'));
+                        r2(getUrl('guest/order/gateway/' . $router_id . '/' . $plan_id), 'e', Lang::T('Phone number is required for SMS delivery. Please enter your phone number.'));
                     }
 
                     if (empty($gateway)) {
                         _log('Guest purchase error: Payment method not selected');
-                        r2(getUrl('guest/order/gateway/' . $router_name . '/' . $plan_id), 'e', Lang::T('Please select a payment method to continue.'));
+                        r2(getUrl('guest/order/gateway/' . $router_id . '/' . $plan_id), 'e', Lang::T('Please select a payment method to continue.'));
                     }
 
                     // Validate gateway exists
                     $gateway_file = 'system/paymentgateway/' . $gateway . '.php';
                     if (!file_exists($gateway_file)) {
                         _log("Guest purchase error: Payment gateway file not found - {$gateway}");
-                        r2(getUrl('guest/order/gateway/' . $router_name . '/' . $plan_id), 'e', Lang::T('The selected payment method is not available. Please choose another method.'));
+                        r2(getUrl('guest/order/gateway/' . $router_id . '/' . $plan_id), 'e', Lang::T('The selected payment method is not available. Please choose another method.'));
                     }
 
                     $plan = ORM::for_table('tbl_plans')
@@ -174,13 +176,19 @@ switch ($action) {
                         r2(getUrl('login'), 'e', Lang::T('The selected plan is no longer available. Please choose another plan.'));
                     }
 
+                    // Validate router ID
+                    if (empty($router_id) || !is_numeric($router_id)) {
+                        _log('Guest purchase error: Invalid router ID provided');
+                        r2(getUrl('login'), 'e', Lang::T('Invalid router selected. Please try again.'));
+                    }
+
                     $router = ORM::for_table('tbl_routers')
-                        ->where('name', $router_name)
+                        ->where('id', $router_id)
                         ->where('enabled', '1')
                         ->find_one();
 
                     if (!$router) {
-                        _log("Guest purchase error: Router name {$router_name} not found or disabled during transaction creation");
+                        _log("Guest purchase error: Router ID {$router_id} not found or disabled during transaction creation");
                         r2(getUrl('login'), 'e', Lang::T('Network router is unavailable. Please contact support.'));
                     }
 
