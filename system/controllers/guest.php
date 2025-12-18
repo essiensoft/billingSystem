@@ -221,23 +221,8 @@ switch ($action) {
                     // Use configurable expiry time (default 6 hours)
                     $expiryHours = $config['guest_transaction_expiry_hours'] ?? 6;
                     $trx->expired_date = date('Y-m-d H:i:s', strtotime("+{$expiryHours} hours"));
-                    
-                    // Store guest info and transaction metadata for webhook lookup
-                    $pg_request_data = [
-                        'email' => $email,
-                        'phonenumber' => $phonenumber,
-                        'guest_purchase' => true,
-                        'transaction_id' => null,  // Will be set after save
-                        'callback_url' => null  // Will be set after save
-                    ];
-                    $trx->pg_request = json_encode($pg_request_data);
+                    $trx->pg_request = json_encode(['email' => $email, 'phonenumber' => $phonenumber, 'guest_purchase' => true]);
                     $trx->status = 1; // Unpaid
-                    $trx->save();
-                    
-                    // Update with actual transaction ID and callback URL for webhook lookup
-                    $pg_request_data['transaction_id'] = $trx->id();
-                    $pg_request_data['callback_url'] = U . 'guest/order/view/' . $trx->id();
-                    $trx->pg_request = json_encode($pg_request_data);
                     $trx->save();
 
                     _log("Guest purchase: Transaction {$trx->id()} created for email {$email}, phone {$phonenumber}, plan {$plan['name_plan']}");
@@ -317,39 +302,6 @@ switch ($action) {
 
                         // Reload transaction
                         $trx = ORM::for_table('tbl_payment_gateway')->find_one($trx_id);
-                        
-                        // Generate voucher if payment successful but voucher not yet generated
-                        if ($trx['status'] == 2) {
-                            $pg_response = json_decode($trx['pg_paid_response'], true);
-                            if (!isset($pg_response['voucher_code']) || empty($pg_response['voucher_code'])) {
-                                _log("Guest purchase: Payment confirmed for transaction {$trx_id}, generating voucher");
-                                
-                                // Get guest email and phone
-                                $guestEmail = GuestPurchase::getGuestEmail($trx);
-                                $guestPhone = GuestPurchase::getGuestPhoneNumber($trx);
-                                
-                                // Generate voucher
-                                $voucherCode = GuestPurchase::generateVoucher($trx, $guestEmail, $guestPhone);
-                                
-                                if ($voucherCode) {
-                                    // Update transaction with voucher info
-                                    $pg_response = $pg_response ?: [];
-                                    $pg_response['voucher_code'] = $voucherCode;
-                                    $pg_response['voucher_generated_at'] = date('Y-m-d H:i:s');
-                                    
-                                    $trx->pg_paid_response = json_encode($pg_response);
-                                    $trx->save();
-                                    
-                                    _log("Guest purchase: Voucher {$voucherCode} generated for transaction {$trx_id}");
-                                    r2(getUrl('guest/order/view/' . $trx_id), 's', Lang::T('Payment confirmed! Your voucher has been sent to your email and SMS.'));
-                                } else {
-                                    _log("Guest purchase error: Failed to generate voucher for paid transaction {$trx_id}");
-                                    r2(getUrl('guest/order/view/' . $trx_id), 'e', Lang::T('Payment confirmed but voucher generation failed. Please contact support.'));
-                                }
-                            } else {
-                                r2(getUrl('guest/order/view/' . $trx_id), 's', Lang::T('Payment confirmed!'));
-                            }
-                        }
                     }
 
                     // Get voucher if payment is successful
@@ -364,33 +316,6 @@ switch ($action) {
 
                             if (!$voucher) {
                                 _log("Guest purchase warning: Voucher code {$pg_response['voucher_code']} not found for paid transaction {$trx_id}");
-                            }
-                            
-                            // Auto-login if auto-activation is enabled and customer account exists
-                            if (isset($pg_response['auto_activated']) && $pg_response['auto_activated'] === true) {
-                                if (isset($pg_response['username']) && isset($pg_response['password'])) {
-                                    // Find customer account
-                                    $customer = ORM::for_table('tbl_customers')
-                                        ->where('username', $pg_response['username'])
-                                        ->find_one();
-                                    
-                                    if ($customer && $customer['status'] == 'Active') {
-                                        // Auto-login the guest customer
-                                        session_regenerate_id(true);
-                                        $_SESSION['uid'] = $customer['id'];
-                                        $_SESSION['user'] = $customer['username'];
-                                        $_SESSION['cid'] = $customer['id'];
-                                        
-                                        // Update last login
-                                        $customer->last_login = date('Y-m-d H:i:s');
-                                        $customer->save();
-                                        
-                                        _log("Guest purchase: Auto-logged in customer {$customer['username']} after successful payment");
-                                        
-                                        // Redirect to customer dashboard
-                                        r2(getUrl('dashboard'), 's', Lang::T('Welcome! Your internet access is now active.'));
-                                    }
-                                }
                             }
                         } else {
                             _log("Guest purchase warning: No voucher code in response for paid transaction {$trx_id}");
