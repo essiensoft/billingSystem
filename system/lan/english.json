@@ -983,5 +983,6 @@
     "Local_IP": "Local IP",
     "Range_IP": "Range IP",
     "Router": "Router",
-    "How_it_works_": "How it works:"
+    "How_it_works_": "How it works:",
+    "An_error_occurred_while_processing_your_order__Please_try_again_or_contact_support_": "An error occurred while processing your order. Please try again or contact support."
 }
