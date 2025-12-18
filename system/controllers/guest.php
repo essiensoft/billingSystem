@@ -205,7 +205,8 @@ switch ($action) {
 
                     // Create payment gateway transaction
                     $trx = ORM::for_table('tbl_payment_gateway')->create();
-                    $trx->username = 'GUEST-' . time(); // Simple guest identifier
+                    // Store email and phone in username for easy retrieval (survives Paystack processing)
+                    $trx->username = 'GUEST-' . base64_encode($email . '|' . $phonenumber);
                     $trx->gateway = $gateway;
                     $trx->plan_id = $plan['id'];
                     $trx->plan_name = $plan['name_plan'];
@@ -221,13 +222,6 @@ switch ($action) {
                     // Use configurable expiry time (default 6 hours)
                     $expiryHours = $config['guest_transaction_expiry_hours'] ?? 6;
                     $trx->expired_date = date('Y-m-d H:i:s', strtotime("+{$expiryHours} hours"));
-                    
-                    // Store contact info in pg_paid_response (won't be overwritten until payment succeeds)
-                    $contact_info = [
-                        'guest_email' => $email,
-                        'guest_phone' => $phonenumber
-                    ];
-                    $trx->pg_paid_response = json_encode($contact_info);
                     
                     // Store guest info and transaction metadata for webhook lookup
                     $pg_request_data = [
