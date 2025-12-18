@@ -678,7 +678,7 @@ switch ($action) {
                 "CASE WHEN DATE(created_at) = CURDATE() THEN 'Today' ELSE DATE(created_at) END",
                 'created_datetime'
             )
-            ->where_not_equal('created_at', '0')
+            ->where_not_null('created_at')
             ->select_expr('COUNT(*)', 'voucher_count')
             ->group_by('created_datetime')
             ->order_by_desc('created_datetime')
