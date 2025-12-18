@@ -805,7 +805,7 @@
                                             <span>Instant activation</span>
                                         </div>
                                     </div>
-                                    <a href="{Text::url('guest/order/gateway/')}{$plan.router_id}/{$plan.id}" class="btn-buy">
+                                    <a href="{Text::url('guest/order/gateway/')}{$plan.routers}/{$plan.id}" class="btn-buy">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 6px;">
                                             <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
                                             <line x1="1" y1="10" x2="23" y2="10"></line>
