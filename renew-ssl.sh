@@ -22,13 +22,21 @@ certbot renew --quiet
 if [ $? -eq 0 ]; then
     echo "✓ Certificate renewed successfully"
     
+    # Ensure SSL directory exists
+    echo "Ensuring SSL directory exists..."
+    mkdir -p /opt/mulanet/billingSystem/ssl
+    
     # Copy new certificates
     echo "Copying certificates..."
-    cp /etc/letsencrypt/live/mulanet.cloud/fullchain.pem /opt/mulanet/billingSystem/ssl/
-    cp /etc/letsencrypt/live/mulanet.cloud/privkey.pem /opt/mulanet/billingSystem/ssl/
-    chmod 644 /opt/mulanet/billingSystem/ssl/*.pem
-    
-    echo "✓ Certificates copied"
+    if cp /etc/letsencrypt/live/mulanet.cloud/fullchain.pem /opt/mulanet/billingSystem/ssl/ && \
+       cp /etc/letsencrypt/live/mulanet.cloud/privkey.pem /opt/mulanet/billingSystem/ssl/; then
+        chmod 644 /opt/mulanet/billingSystem/ssl/*.pem
+        chown root:root /opt/mulanet/billingSystem/ssl/*.pem
+        echo "✓ Certificates copied"
+    else
+        echo "✗ Failed to copy certificates"
+        exit 1
+    fi
 else
     echo "✗ Certificate renewal failed"
 fi

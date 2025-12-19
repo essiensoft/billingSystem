@@ -85,10 +85,43 @@ fi
 # Step 4: Create SSL directory and copy certificates
 echo ""
 echo "Step 4: Copying certificates..."
-mkdir -p $SSL_DIR
-cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem $SSL_DIR/
-cp /etc/letsencrypt/live/$DOMAIN/privkey.pem $SSL_DIR/
+
+# Create SSL directory with proper error handling
+if ! mkdir -p $SSL_DIR; then
+    echo "❌ Failed to create SSL directory: $SSL_DIR"
+    echo "Check permissions and disk space"
+    docker start $CONTAINER_NAME
+    exit 1
+fi
+
+echo "✓ SSL directory created: $SSL_DIR"
+
+# Verify Let's Encrypt certificates exist
+if [ ! -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
+    echo "❌ Certificate not found: /etc/letsencrypt/live/$DOMAIN/fullchain.pem"
+    exit 1
+fi
+
+if [ ! -f "/etc/letsencrypt/live/$DOMAIN/privkey.pem" ]; then
+    echo "❌ Private key not found: /etc/letsencrypt/live/$DOMAIN/privkey.pem"
+    exit 1
+fi
+
+# Copy certificates with error handling
+if ! cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem $SSL_DIR/; then
+    echo "❌ Failed to copy fullchain.pem"
+    exit 1
+fi
+
+if ! cp /etc/letsencrypt/live/$DOMAIN/privkey.pem $SSL_DIR/; then
+    echo "❌ Failed to copy privkey.pem"
+    exit 1
+fi
+
+# Set proper permissions
 chmod 644 $SSL_DIR/*.pem
+chown root:root $SSL_DIR/*.pem
+
 echo "✓ Certificates copied to $SSL_DIR"
 
 # Step 5: Verify certificates
