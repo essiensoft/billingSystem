@@ -257,7 +257,7 @@ switch ($action) {
                         require_once $dvc;
                         (new $p['device'])->remove_customer($c, $p);
                     } else {
-                        throw new Exception(Lang::T("Devices Not Found"));
+                        new Exception(Lang::T("Devices Not Found"));
                     }
                 }
                 $b->status = 'off';
@@ -295,7 +295,7 @@ switch ($action) {
                                 (new $p['device'])->add_customer($c, $p);
                             }
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                 }
@@ -440,7 +440,7 @@ switch ($action) {
                             $p['plan_expired'] = 0;
                             (new $p['device'])->remove_customer($c, $p);
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                 }
@@ -812,7 +812,7 @@ switch ($action) {
                                 }
                                 (new $p['device'])->add_customer($c, $p);
                             } else {
-                                throw new Exception(Lang::T("Devices Not Found"));
+                                new Exception(Lang::T("Devices Not Found"));
                             }
                         }
                     }
@@ -842,12 +842,9 @@ switch ($action) {
         $append_url = "&order=" . urlencode($order) . "&filter=" . urlencode($filter) . "&orderby=" . urlencode($orderby);
 
         if ($search != '') {
-            // SECURITY FIX: Use parameterized query to prevent SQL injection
             $query = ORM::for_table('tbl_customers')
-                ->where_raw(
-                    "(username LIKE ? OR fullname LIKE ? OR address LIKE ? OR phonenumber LIKE ? OR email LIKE ?) AND status=?",
-                    ["%$search%", "%$search%", "%$search%", "%$search%", "%$search%", $filter]
-                );
+                ->whereRaw("username LIKE '%$search%' OR fullname LIKE '%$search%' OR address LIKE '%$search%' " .
+                    "OR phonenumber LIKE '%$search%' OR email LIKE '%$search%' AND status='$filter'");
         } else {
             $query = ORM::for_table('tbl_customers');
             $query->where("status", $filter);

@@ -98,7 +98,7 @@ switch ($do) {
                                 ];
                                 (new $p['device'])->add_customer($c, $p);
                             } else {
-                                throw new Exception(Lang::T("Devices Not Found"));
+                                new Exception(Lang::T("Devices Not Found"));
                             }
                             if (!empty($config['voucher_redirect'])) {
                                 r2($config['voucher_redirect'], 's', Lang::T("Voucher activation success, now you can login"));
@@ -106,7 +106,7 @@ switch ($do) {
                                 r2(getUrl('login'), 's', Lang::T("Voucher activation success, now you can login"));
                             }
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                     if (!empty($config['voucher_redirect'])) {
@@ -118,8 +118,7 @@ switch ($do) {
                     _alert(Lang::T('Internet Plan Expired'), 'danger', "login");
                 }
             } else {
-                // SECURITY FIX: Use parameterized query instead of raw SQL to prevent SQL injection
-                $v = ORM::for_table('tbl_voucher')->where('code', $voucher)->find_one();
+                $v = ORM::for_table('tbl_voucher')->whereRaw("BINARY code = '$voucher'")->find_one();
                 if (!$v) {
                     _alert(Lang::T('Voucher invalid'), 'danger', "login");
                 }
@@ -144,7 +143,7 @@ switch ($do) {
                                             ];
                                             (new $p['device'])->add_customer($c, $p);
                                         } else {
-                                            throw new Exception(Lang::T("Devices Not Found"));
+                                            new Exception(Lang::T("Devices Not Found"));
                                         }
                                         if (!empty($config['voucher_redirect'])) {
                                             r2($config['voucher_redirect'], 's', Lang::T("Voucher activation success, now you can login"));
@@ -152,7 +151,7 @@ switch ($do) {
                                             r2(getUrl('login'), 's', Lang::T("Voucher activation success, now you can login"));
                                         }
                                     } else {
-                                        throw new Exception(Lang::T("Devices Not Found"));
+                                        new Exception(Lang::T("Devices Not Found"));
                                     }
                                 }
                                 if (!empty($config['voucher_redirect'])) {
@@ -167,8 +166,7 @@ switch ($do) {
                             _alert(Lang::T('Voucher activation failed'), 'danger', "login");
                         }
                     } else {
-                        _log("Voucher activation failed for code: {$voucher}. Package::rechargeUser returned false.");
-                        _alert(Lang::T('Voucher activation failed. The network router may be unavailable. Please contact support.'), 'danger', "login");
+                        _alert(Lang::T('Voucher activation failed'), 'danger', "login");
                     }
                 } else {
                     _alert(Lang::T('Internet Voucher Expired'), 'danger', "login");
@@ -177,8 +175,7 @@ switch ($do) {
         } else {
             $voucher = Text::alphanumeric(_post('voucher'), "-_.,");
             $username = _post('username');
-            // SECURITY FIX: Use parameterized query instead of raw SQL to prevent SQL injection
-            $v1 = ORM::for_table('tbl_voucher')->where('code', $voucher)->find_one();
+            $v1 = ORM::for_table('tbl_voucher')->whereRaw("BINARY code = '$voucher'")->find_one();
             if ($v1) {
                 // voucher exists, check customer exists or not
                 $user = ORM::for_table('tbl_customers')->where('username', $username)->find_one();
@@ -228,7 +225,7 @@ switch ($do) {
                                             r2(getUrl('login'), 's', Lang::T("Voucher activation success, now you can login"));
                                         }
                                     } else {
-                                        throw new Exception(Lang::T("Devices Not Found"));
+                                        new Exception(Lang::T("Devices Not Found"));
                                     }
                                 }
                                 if (!empty($config['voucher_redirect'])) {
@@ -253,8 +250,7 @@ switch ($do) {
                         // if failed to recharge, restore old password
                         $user->password = $oldPass;
                         $user->save();
-                        _log("Voucher activation failed for code: {$voucher}, username: {$username}. Package::rechargeUser returned false.");
-                        r2(getUrl('login'), 'e', Lang::T("Failed to activate voucher. The network router may be unavailable. Please contact support."));
+                        r2(getUrl('login'), 'e', Lang::T("Failed to activate voucher"));
                     }
                 } else {
                     // used voucher
@@ -276,7 +272,7 @@ switch ($do) {
                                             r2(getUrl('login'), 's', Lang::T("Voucher activation success, now you can login"));
                                         }
                                     } else {
-                                        throw new Exception(Lang::T("Devices Not Found"));
+                                        new Exception(Lang::T("Devices Not Found"));
                                     }
                                 }
                                 if (!empty($config['voucher_redirect'])) {
@@ -312,50 +308,9 @@ switch ($do) {
         run_hook('customer_view_login'); #HOOK
         $csrf_token = Csrf::generateAndStoreToken();
         if ($config['disable_registration'] == 'yes') {
-            // Get allowed plan types from config (default to Hotspot for backward compatibility)
-            $allowedTypesConfig = $config['guest_allowed_plan_types'] ?? 'Hotspot';
-            $allowedTypes = array_map('trim', explode(',', $allowedTypesConfig));
-            
-            // Fetch guest purchase plans (enabled plans of allowed types, sorted by price)
-            $guest_plans_raw = ORM::for_table('tbl_plans')
-                ->left_outer_join('tbl_bandwidth', array('tbl_plans.id_bw', '=', 'tbl_bandwidth.id'))
-                ->select('tbl_plans.*')
-                ->select('tbl_bandwidth.name_bw', 'name_bw')
-                ->where('tbl_plans.enabled', '1')
-                ->where_in('tbl_plans.type', $allowedTypes)
-                ->order_by_asc('tbl_plans.price')
-                ->find_array();
-
-
-            // Filter plans to only include those with valid, enabled routers
-            $guest_plans = [];
-            $router_error = '';
-
-            foreach ($guest_plans_raw as $plan) {
-                // Check if router exists and is enabled
-                $router = ORM::for_table('tbl_routers')
-                    ->where('name', $plan['routers'])
-                    ->where('enabled', '1')
-                    ->find_one();
-
-                if ($router) {
-                    $guest_plans[] = $plan;
-                } else {
-                    _log("Guest purchase warning: Plan '{$plan['name_plan']}' (ID: {$plan['id']}) has invalid/disabled router name: {$plan['routers']}");
-                }
-            }
-
-            // If no valid plans available, show error
-            if (empty($guest_plans) && !empty($guest_plans_raw)) {
-                $router_error = Lang::T('Internet packages are currently unavailable due to network configuration. Please contact support.');
-                _log('Guest purchase error: No valid routers configured for any guest purchase plans');
-            }
-
             $ui->assign('csrf_token', $csrf_token);
             $ui->assign('_title', Lang::T('Activation'));
             $ui->assign('code', alphanumeric(_get('code'), "-"));
-            $ui->assign('guest_plans', $guest_plans);
-            $ui->assign('router_error', $router_error);
             $ui->display('customer/login-noreg.tpl');
         } else {
             $UPLOAD_URL_PATH = str_replace($root_path, '',  $UPLOAD_PATH);

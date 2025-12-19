@@ -71,11 +71,6 @@ switch ($action) {
                 $msg .= Lang::T('All field is required') . '<br>';
             }
 
-            // SECURITY FIX: Validate IP address format
-            if (!empty($ip_address) && !filter_var($ip_address, FILTER_VALIDATE_IP)) {
-                $msg .= Lang::T('Invalid IP address format. Please enter a valid IPv4 or IPv6 address') . '<br>';
-            }
-
             $d = ORM::for_table('tbl_routers')->where('ip_address', $ip_address)->find_one();
             if ($d) {
                 $msg .= Lang::T('IP Router Already Exist') . '<br>';
@@ -94,13 +89,7 @@ switch ($action) {
             $d->name = $name;
             $d->ip_address = $ip_address;
             $d->username = $username;
-            // SECURITY FIX: Encrypt router password before storing
-            try {
-                $d->password = Crypto::encrypt($password);
-            } catch (Exception $e) {
-                _log("CRITICAL: Failed to encrypt router password - " . $e->getMessage(), 'System', $admin['id']);
-                r2(getUrl('routers/add'), 'e', 'Failed to encrypt password. Please contact administrator.');
-            }
+            $d->password = $password;
             $d->description = $description;
             $d->enabled = $enabled;
             $d->save();
@@ -128,11 +117,6 @@ switch ($action) {
         if($enabled || _post("testIt")){
             if ($ip_address == '' or $username == '') {
                 $msg .= Lang::T('All field is required') . '<br>';
-            }
-
-            // SECURITY FIX: Validate IP address format
-            if (!empty($ip_address) && !filter_var($ip_address, FILTER_VALIDATE_IP)) {
-                $msg .= Lang::T('Invalid IP address format. Please enter a valid IPv4 or IPv6 address') . '<br>';
             }
         }
 
@@ -172,15 +156,7 @@ switch ($action) {
             $d->name = $name;
             $d->ip_address = $ip_address;
             $d->username = $username;
-            // SECURITY FIX: Encrypt router password before storing (only if password changed)
-            if (!empty($password)) {
-                try {
-                    $d->password = Crypto::encrypt($password);
-                } catch (Exception $e) {
-                    _log("CRITICAL: Failed to encrypt router password - " . $e->getMessage(), 'System', $admin['id']);
-                    r2(getUrl('routers/edit/' . $id), 'e', 'Failed to encrypt password. Please contact administrator.');
-                }
-            }
+            $d->password = $password;
             $d->description = $description;
             $d->coordinates = $coordinates;
             $d->coverage = $coverage;

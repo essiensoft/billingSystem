@@ -123,8 +123,6 @@ class Admin
                 'httponly' => true,
                 'samesite' => 'Lax',
             ]);
-            // SECURITY FIX: Initialize secure session configuration
-            SessionConfig::init();
             session_destroy();
             session_unset();
             session_start();

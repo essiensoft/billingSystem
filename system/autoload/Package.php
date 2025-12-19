@@ -233,26 +233,26 @@ class Package
                         require_once $dvc;
                         (new $p['device'])->add_customer($c, $p);
                     } else {
-                        throw new Exception(Lang::T("Devices Not Found"));
+                        new Exception(Lang::T("Devices Not Found"));
                     }
                 } catch (Throwable $e) {
-                    $errorMsg = "System Error. When activate Package. You need to sync manually\n" .
-                        "Router: $router_name\n" .
-                        "Customer: u$c[username]\n" .
-                        "Plan: p$p[name_plan]\n" .
-                        $e->getMessage() . "\n" .
-                        $e->getTraceAsString();
-                    _log($errorMsg, 'System', 0);
-                    Message::sendTelegram($errorMsg);
+                    Message::sendTelegram(
+                        "System Error. When activate Package. You need to sync manually\n" .
+                            "Router: $router_name\n" .
+                            "Customer: u$c[username]\n" .
+                            "Plan: p$p[name_plan]\n" .
+                            $e->getMessage() . "\n" .
+                            $e->getTraceAsString()
+                    );
                 } catch (Exception $e) {
-                    $errorMsg = "System Error. When activate Package. You need to sync manually\n" .
-                        "Router: $router_name\n" .
-                        "Customer: u$c[username]\n" .
-                        "Plan: p$p[name_plan]\n" .
-                        $e->getMessage() . "\n" .
-                        $e->getTraceAsString();
-                    _log($errorMsg, 'System', 0);
-                    Message::sendTelegram($errorMsg);
+                    Message::sendTelegram(
+                        "System Error. When activate Package. You need to sync manually\n" .
+                            "Router: $router_name\n" .
+                            "Customer: u$c[username]\n" .
+                            "Plan: p$p[name_plan]\n" .
+                            $e->getMessage() . "\n" .
+                            $e->getTraceAsString()
+                    );
                 }
             }
             //}
@@ -349,26 +349,26 @@ class Package
                         require_once $dvc;
                         (new $p['device'])->add_customer($c, $p);
                     } else {
-                        throw new Exception(Lang::T("Devices Not Found"));
+                        new Exception(Lang::T("Devices Not Found"));
                     }
                 } catch (Throwable $e) {
-                    $errorMsg = "System Error. When activate Package. You need to sync manually\n" .
-                        "Router: $router_name\n" .
-                        "Customer: u$c[username]\n" .
-                        "Plan: p$p[name_plan]\n" .
-                        $e->getMessage() . "\n" .
-                        $e->getTraceAsString();
-                    _log($errorMsg, 'System', 0);
-                    Message::sendTelegram($errorMsg);
+                    Message::sendTelegram(
+                        "System Error. When activate Package. You need to sync manually\n" .
+                            "Router: $router_name\n" .
+                            "Customer: u$c[username]\n" .
+                            "Plan: p$p[name_plan]\n" .
+                            $e->getMessage() . "\n" .
+                            $e->getTraceAsString()
+                    );
                 } catch (Exception $e) {
-                    $errorMsg = "System Error. When activate Package. You need to sync manually\n" .
-                        "Router: $router_name\n" .
-                        "Customer: u$c[username]\n" .
-                        "Plan: p$p[name_plan]\n" .
-                        $e->getMessage() . "\n" .
-                        $e->getTraceAsString();
-                    _log($errorMsg, 'System', 0);
-                    Message::sendTelegram($errorMsg);
+                    Message::sendTelegram(
+                        "System Error. When activate Package. You need to sync manually\n" .
+                            "Router: $router_name\n" .
+                            "Customer: u$c[username]\n" .
+                            "Plan: p$p[name_plan]\n" .
+                            $e->getMessage() . "\n" .
+                            $e->getTraceAsString()
+                    );
                 }
             }
 

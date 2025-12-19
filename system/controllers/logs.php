@@ -161,12 +161,8 @@ switch ($action) {
         }
 
         if ($q !== null && $q !== '') {
-            // SECURITY FIX: Use parameterized query to prevent SQL injection
             $query = ORM::for_table('tbl_message_logs')
-                ->where_raw(
-                    "(message_type LIKE ? OR recipient LIKE ? OR message_content LIKE ? OR status LIKE ? OR error_message LIKE ?)",
-                    ["%$q%", "%$q%", "%$q%", "%$q%", "%$q%"]
-                )
+            ->whereRaw("message_type LIKE '%$q%' OR recipient LIKE '%$q%' OR message_content LIKE '%$q%' OR status LIKE '%$q%' OR error_message LIKE '%$q%'")
                 ->order_by_desc('sent_at');
             $d = Paginator::findMany($query, ['q' => $q]);
         } else {

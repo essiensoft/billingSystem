@@ -500,14 +500,7 @@ class Radius
             if (!empty($n['ports'])) {
                 $port = $n['ports'];
             }
-            // SECURITY FIX: Properly escape shell arguments to prevent command injection
-            $echoArg = escapeshellarg("User-Name = $username,Framed-IP-Address = " . $act['framedipaddress']);
-            $serverArg = escapeshellarg(trim($n['nasname']) . ":$port");
-            $secretArg = escapeshellarg($n['secret']);
-            
-            $result[] = $n['nasname'] . ': ' . @shell_exec(
-                "echo $echoArg | radclient -x $serverArg disconnect $secretArg"
-            );
+            $result[] = $n['nasname'] . ': ' . @shell_exec("echo 'User-Name = $username,Framed-IP-Address = " . $act['framedipaddress'] . "' | radclient -x " . trim($n['nasname']) . ":$port disconnect '" . $n['secret'] . "'");
         }
         return $result;
     }

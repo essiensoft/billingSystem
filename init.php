@@ -52,7 +52,7 @@ if (!file_exists($root_path .  File::pathFixer('system/orm.php'))) {
 }
 
 $DEVICE_PATH = $root_path . File::pathFixer('system/devices');
-$UPLOAD_PATH = $root_path . File::pathFixer('system/uploads') . DIRECTORY_SEPARATOR;
+$UPLOAD_PATH = $root_path . File::pathFixer('system/uploads');
 $CACHE_PATH = $root_path . File::pathFixer('system/cache');
 $PAGES_PATH = $root_path . File::pathFixer('pages');
 $PLUGIN_PATH = $root_path . File::pathFixer('system/plugin');
@@ -299,14 +299,9 @@ function generateUniqueNumericVouchers($totalVouchers, $length = 8)
     for ($j = 0; $j < $totalVouchers; $j++) {
         do {
             $voucherCode = '';
-            // SECURITY FIX: Use cryptographically secure random_int() instead of weak rand()
-            try {
-                for ($i = 0; $i < $length; $i++) {
-                    $voucherCode .= $characters[random_int(0, $charactersLength - 1)];
-                }
-            } catch (Exception $e) {
-                _log("CRITICAL: Failed to generate cryptographically secure voucher - " . $e->getMessage(), 'System', 0);
-                throw new Exception("Voucher generation failed. Please contact administrator.");
+            // Generate the voucher code
+            for ($i = 0; $i < $length; $i++) {
+                $voucherCode .= $characters[rand(0, $charactersLength - 1)];
             }
             // Check if the generated voucher code already exists in the array
             $isUnique = !in_array($voucherCode, $vouchers);

@@ -22,14 +22,7 @@ switch ($action) {
     case 'customer':
         if(!empty(_req('search'))){
             $search = _req('search');
-            // SECURITY FIX: Use parameterized query to prevent SQL injection
-            $query = ORM::for_table('tbl_customers')
-                ->where_not_equal('coordinates', '')
-                ->where_raw(
-                    "(fullname LIKE ? OR username LIKE ? OR email LIKE ? OR phonenumber LIKE ?)",
-                    ["%$search%", "%$search%", "%$search%", "%$search%"]
-                )
-                ->order_by_desc('fullname');
+            $query = ORM::for_table('tbl_customers')->whereRaw("coordinates != '' AND fullname LIKE '%$search%' OR username LIKE '%$search%' OR email LIKE '%$search%' OR phonenumber LIKE '%$search%'")->order_by_desc('fullname');
             $c = Paginator::findMany($query, ['search' => $search], 50);
         }else{
             $query = ORM::for_table('tbl_customers')->where_not_equal('coordinates','');
@@ -67,6 +60,21 @@ switch ($action) {
             $ui->assign('d', $d);
             $ui->assign('_title', Lang::T('Routers Geo Location Information'));
             $ui->display('admin/maps/routers.tpl');
+            break;
+    /*   ODPs Geo Location  */
+    /*  Added by ItsLiLxyzx  */
+    case 'odp':
+            $name = _post('name');
+            $query = ORM::for_table('tbl_odps')->where_not_equal('coordinates', '')->order_by_desc('id');
+            $query->selects(['id', 'name', 'port_amount', 'coordinates', 'address', 'attenuation', 'coverage']);
+            if ($name != '') {
+                $query->where_like('name', '%' . $name . '%');
+            }
+            $d = Paginator::findMany($query, ['name' => $name], '20', '', true);
+            $ui->assign('name', $name);
+            $ui->assign('d', $d);
+            $ui->assign('_title', Lang::T('ODP Geo Location Information'));
+            $ui->display('admin/maps/odps.tpl');
             break;
     default:
         r2(getUrl('map/customer'), 'e', 'action not defined');

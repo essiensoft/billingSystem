@@ -99,12 +99,6 @@ if (_post('send') == 'balance') {
 
 // Sync plan to router
 if (isset($_GET['sync']) && !empty($_GET['sync'])) {
-    // Get user's active recharges
-    $_bill = ORM::for_table('tbl_user_recharges')
-        ->where('customer_id', $user['id'])
-        ->find_many();
-    
-    $log = '';
     foreach ($_bill as $tur) {
         if ($tur['status'] == 'on') {
             $p = ORM::for_table('tbl_plans')->findOne($tur['plan_id']);
@@ -121,10 +115,10 @@ if (isset($_GET['sync']) && !empty($_GET['sync'])) {
                                 (new $p['device'])->add_customer($c, $p);
                             }
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
-                    $log .= "DONE : $tur[namebp], $tur[type], $tur[routers]<br>";
+                    $log .= "DONE : $ptur[namebp], $tur[type], $tur[routers]<br>";
                 } else {
                     $log .= "Customer NOT FOUND : $tur[namebp], $tur[type], $tur[routers]<br>";
                 }
@@ -144,11 +138,7 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
         r2(getUrl('voucher/invoice/'));
         die();
     }
-    // SECURITY FIX: Use customer_id instead of username for stronger access control
-    $bill = ORM::for_table('tbl_user_recharges')
-        ->where('id', $_GET['recharge'])
-        ->where('customer_id', $user['id'])
-        ->findOne();
+    $bill = ORM::for_table('tbl_user_recharges')->where('id', $_GET['recharge'])->where('username', $user['username'])->findOne();
     if ($bill) {
         if ($bill['routers'] == 'radius') {
             $router = 'radius';
@@ -157,14 +147,6 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
             $router = $routers['id'];
         }
         r2(getUrl("order/gateway/$router/$bill[plan_id]"));
-    } else {
-        // SECURITY FIX: Log unauthorized access attempt
-        SecurityHelper::logSecurityEvent(
-            "Unauthorized recharge access attempt: recharge_id=" . $_GET['recharge'],
-            'high',
-            ['user_id' => $user['id'], 'username' => $user['username']]
-        );
-        r2(getUrl('home'), 'e', 'Unauthorized access');
     }
 } else if (!empty(_get('extend'))) {
     if ($user['status'] != 'Active') {
@@ -202,7 +184,7 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
                     $isChangePlan = true;
                     (new $p['device'])->add_customer($user, $p);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
 
@@ -227,11 +209,7 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
         r2(getUrl('home'), 'e', "Plan Not Found or Not Active");
     }
 } else if (isset($_GET['deactivate']) && !empty($_GET['deactivate'])) {
-    // SECURITY FIX: Use customer_id instead of username for stronger access control
-    $bill = ORM::for_table('tbl_user_recharges')
-        ->where('id', $_GET['deactivate'])
-        ->where('customer_id', $user['id'])
-        ->findOne();
+    $bill = ORM::for_table('tbl_user_recharges')->where('id', $_GET['deactivate'])->where('username', $user['username'])->findOne();
     if ($bill) {
         $p = ORM::for_table('tbl_plans')->where('id', $bill['plan_id'])->find_one();
         $dvc = Package::getDevice($p);
@@ -240,7 +218,7 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
                 require_once $dvc;
                 (new $p['device'])->remove_customer($user, $p);
             } else {
-                throw new Exception(Lang::T("Devices Not Found"));
+                new Exception(Lang::T("Devices Not Found"));
             }
         }
         $bill->status = 'off';
@@ -251,13 +229,7 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
         Message::sendTelegram('User u' . $bill['username'] . ' Deactivate ' . $bill['namebp']);
         r2(getUrl('home'), 's', 'Success deactivate ' . $bill['namebp']);
     } else {
-        // SECURITY FIX: Log unauthorized access attempt
-        SecurityHelper::logSecurityEvent(
-            "Unauthorized deactivate access attempt: recharge_id=" . $_GET['deactivate'],
-            'high',
-            ['user_id' => $user['id'], 'username' => $user['username']]
-        );
-        r2(getUrl('home'), 'e', 'Unauthorized access');
+        r2(getUrl('home'), 'e', 'No Active Plan');
     }
 }
 
@@ -278,7 +250,7 @@ if (!empty($_SESSION['nux-mac']) && !empty($_SESSION['nux-ip'] && $_c['hs_auth_m
                 r2(getUrl('home'), 's', Lang::T('Logout Request successfully'));
             }
         } else {
-            throw new Exception(Lang::T("Devices Not Found"));
+            new Exception(Lang::T("Devices Not Found"));
         }
     }
 }

@@ -13,9 +13,8 @@ if(!_auth(false)){
     if($action== 'invoice'){
         $id = $routes[2];
         $sign = $routes[3];
-        // SECURITY FIX: Upgrade from MD5 to HMAC-SHA256 for signature verification
-        if($sign != hash_hmac('sha256', $id, $db_pass)) {
-            die("Invalid signature");
+        if($sign != md5($id. $db_pass)) {
+            die("beda");
         }
         if (empty($id)) {
             $in = ORM::for_table('tbl_transactions')->order_by_desc('id')->find_one();
@@ -34,8 +33,7 @@ if(!_auth(false)){
                 $ui->assign('wlogo', $width);
                 $ui->assign('hlogo', $height);
             }
-            // SECURITY FIX: Use HMAC-SHA256 instead of MD5
-            $ui->assign('public_url', getUrl("voucher/invoice/$id/".hash_hmac('sha256', $id, $db_pass)));
+            $ui->assign('public_url', getUrl("voucher/invoice/$id/".md5($id. $db_pass)));
             $ui->assign('logo', $logo);
             $ui->display('customer/invoice-customer.tpl');
             die();
@@ -60,8 +58,7 @@ switch ($action) {
 
     case 'activation-post':
         $code = alphanumeric(_post('code'), "-_.,");
-        // SECURITY FIX: Use parameterized query instead of raw SQL to prevent SQL injection
-        $v1 = ORM::for_table('tbl_voucher')->where('code', $code)->where('status', 0)->find_one();
+        $v1 = ORM::for_table('tbl_voucher')->whereRaw("BINARY code = '$code'")->where('status', 0)->find_one();
         run_hook('customer_activate_voucher'); #HOOK
         if ($v1) {
             if (Package::rechargeUser($user['id'], $v1['routers'], $v1['id_plan'], "Voucher", $code)) {
@@ -113,8 +110,7 @@ switch ($action) {
                 $ui->assign('wlogo', $width);
                 $ui->assign('hlogo', $height);
             }
-            // SECURITY FIX: Use HMAC-SHA256 instead of MD5
-            $ui->assign('public_url', getUrl("voucher/invoice/$id/".hash_hmac('sha256', $id, $db_pass)));
+            $ui->assign('public_url', getUrl("voucher/invoice/$id/".md5($id. $db_pass)));
             $ui->assign('logo', $logo);
             $ui->display('customer/invoice-customer.tpl');
         } else {
