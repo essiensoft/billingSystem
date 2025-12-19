@@ -7,7 +7,7 @@ set -e
 echo "Checking RADIUS tables..."
 
 # Check if RADIUS tables exist
-TABLES_EXIST=$(mysql -h "${DB_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" -N -e "
+TABLES_EXIST=$(mysql --ssl-mode=DISABLED -h "${DB_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" -N -e "
     SELECT COUNT(*) 
     FROM information_schema.tables 
     WHERE table_schema = '${DB_NAME}' 
@@ -24,10 +24,10 @@ echo "Installing RADIUS tables from install/radius.sql..."
 
 # Import RADIUS tables
 if [ -f /var/www/html/install/radius.sql ]; then
-    mysql -h "${DB_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" < /var/www/html/install/radius.sql
+    mysql --ssl-mode=DISABLED -h "${DB_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" < /var/www/html/install/radius.sql
     
     # Verify installation
-    TABLES_EXIST=$(mysql -h "${DB_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" -N -e "
+    TABLES_EXIST=$(mysql --ssl-mode=DISABLED -h "${DB_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" -N -e "
         SELECT COUNT(*) 
         FROM information_schema.tables 
         WHERE table_schema = '${DB_NAME}' 

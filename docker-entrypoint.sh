@@ -175,9 +175,6 @@ else
     fi
 fi
 
-# Start cron service for automated cleanup
-echo "Starting cron service for guest purchase cleanup..."
-service cron start
-
 # Execute the main command
+# Note: Cron jobs are handled by the external cron container in docker-compose
 exec "$@"
