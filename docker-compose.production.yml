@@ -133,7 +133,7 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/lib/letsencrypt:/var/lib/letsencrypt
       - /opt/mulanet/billingSystem/ssl:/opt/mulanet/billingSystem/ssl
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet && cp /etc/letsencrypt/live/mulanet.cloud/fullchain.pem /opt/mulanet/billingSystem/ssl/ && cp /etc/letsencrypt/live/mulanet.cloud/privkey.pem /opt/mulanet/billingSystem/ssl/ && chmod 644 /opt/mulanet/billingSystem/ssl/*.pem; sleep 12h & wait $${!}; done;'"
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; if [ -f /etc/letsencrypt/live/mulanet.cloud/fullchain.pem ]; then cp /etc/letsencrypt/live/mulanet.cloud/fullchain.pem /opt/mulanet/billingSystem/ssl/ && cp /etc/letsencrypt/live/mulanet.cloud/privkey.pem /opt/mulanet/billingSystem/ssl/ && chmod 644 /opt/mulanet/billingSystem/ssl/*.pem && echo \"Certificates updated: $(date)\"; else echo \"No certificates found yet. Run setup-ssl.sh first.\"; fi; sleep 12h & wait $${!}; done;'"
     restart: unless-stopped
     networks:
       - phpnuxbill-network
@@ -154,11 +154,14 @@ services:
       # PHPNuxBill scheduled tasks
       # Format: minute hour day month weekday command
 
-      # Run PHPNuxBill cron every 5 minutes (radius sync, notifications, etc.)
-      */5 * * * * docker exec phpnuxbill-app php /var/www/html/cron.php > /dev/null 2>&1
+      # Run PHPNuxBill cron every 5 minutes (radius sync, notifications, expired plans, etc.) [Recommended]
+      */5 * * * * docker exec phpnuxbill-app /bin/sh -c "cd /var/www/html/system/ && /usr/local/bin/php cron.php" > /dev/null 2>&1
+
+      # Reminder Cronjob Every 7 AM (sends expiration reminders to customers)
+      0 7 * * * docker exec phpnuxbill-app /bin/sh -c "cd /var/www/html/system/ && /usr/local/bin/php cron_reminder.php" > /dev/null 2>&1
 
       # Clean expired sessions daily at 2 AM
-      0 2 * * * docker exec phpnuxbill-app php /var/www/html/system/cron/session_cleanup.php > /dev/null 2>&1
+      0 2 * * * docker exec phpnuxbill-app find /var/www/html/system/cache -type f -mtime +1 -delete > /dev/null 2>&1
 
       # Clean old logs weekly on Sunday at 3 AM
       0 3 * * 0 docker exec phpnuxbill-app find /var/www/html/system/cache -type f -mtime +7 -delete > /dev/null 2>&1
