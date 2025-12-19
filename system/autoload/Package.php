@@ -233,7 +233,7 @@ class Package
                         require_once $dvc;
                         (new $p['device'])->add_customer($c, $p);
                     } else {
-                        new Exception(Lang::T("Devices Not Found"));
+                        throw new Exception(Lang::T("Devices Not Found"));
                     }
                 } catch (Throwable $e) {
                     Message::sendTelegram(
@@ -349,7 +349,7 @@ class Package
                         require_once $dvc;
                         (new $p['device'])->add_customer($c, $p);
                     } else {
-                        new Exception(Lang::T("Devices Not Found"));
+                        throw new Exception(Lang::T("Devices Not Found"));
                     }
                 } catch (Throwable $e) {
                     Message::sendTelegram(

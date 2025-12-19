@@ -57,7 +57,7 @@ switch ($action) {
                                 (new $p['device'])->add_customer($c, $p);
                             }
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                     $log .= "DONE : $tur[username], $ptur[namebp], $tur[type], $tur[routers]<br>";
@@ -354,7 +354,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $p['device'])->remove_customer($c, $p);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             $d->delete();
@@ -408,7 +408,7 @@ switch ($action) {
                             $p['plan_expired'] = 0;
                             (new $p['device'])->remove_customer($customer, $p);
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                     //add new plan
@@ -418,7 +418,7 @@ switch ($action) {
                             require_once $dvc;
                             (new $newPlan['device'])->add_customer($customer, $newPlan);
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                 }
@@ -1081,7 +1081,7 @@ switch ($action) {
                             $isChangePlan = true;
                             (new $p['device'])->add_customer($c, $p);
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                     $tur->expiration = $expiration;

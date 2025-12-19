@@ -115,7 +115,7 @@ if (isset($_GET['sync']) && !empty($_GET['sync'])) {
                                 (new $p['device'])->add_customer($c, $p);
                             }
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                     $log .= "DONE : $ptur[namebp], $tur[type], $tur[routers]<br>";
@@ -196,7 +196,7 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
                     $isChangePlan = true;
                     (new $p['device'])->add_customer($user, $p);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
 
@@ -234,7 +234,7 @@ if (isset($_GET['recharge']) && !empty($_GET['recharge'])) {
                 require_once $dvc;
                 (new $p['device'])->remove_customer($user, $p);
             } else {
-                throw new Exception(Lang::T("Devices Not Found"));
+                new Exception(Lang::T("Devices Not Found"));
             }
         }
         $bill->status = 'off';
@@ -272,7 +272,7 @@ if (!empty($_SESSION['nux-mac']) && !empty($_SESSION['nux-ip'] && $_c['hs_auth_m
                 r2(getUrl('home'), 's', Lang::T('Logout Request successfully'));
             }
         } else {
-            throw new Exception(Lang::T("Devices Not Found"));
+            new Exception(Lang::T("Devices Not Found"));
         }
     }
 }

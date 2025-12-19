@@ -208,7 +208,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $d['device'])->remove_plan($d);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             $d->delete();
@@ -303,7 +303,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $d['device'])->add_plan($d);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             r2(getUrl('services/edit/') . $d->id(), 's', Lang::T('Data Created Successfully'));
@@ -416,7 +416,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $d['device'])->update_plan($old, $d);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             r2(getUrl('services/hotspot'), 's', Lang::T('Data Updated Successfully'));
@@ -595,7 +595,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $d['device'])->remove_plan($d);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             $d->delete();
@@ -695,7 +695,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $d['device'])->add_plan($d);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             r2(getUrl('services/pppoe'), 's', Lang::T('Data Created Successfully'));
@@ -796,7 +796,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $d['device'])->update_plan($old, $d);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             r2(getUrl('services/pppoe'), 's', Lang::T('Data Updated Successfully'));
@@ -1087,7 +1087,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $d['device'])->remove_plan($d);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             $d->delete();
@@ -1187,7 +1187,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $d['device'])->add_plan($d);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             r2(getUrl('services/vpn'), 's', Lang::T('Data Created Successfully'));
@@ -1288,7 +1288,7 @@ switch ($action) {
                     require_once $dvc;
                     (new $d['device'])->update_plan($old, $d);
                 } else {
-                    throw new Exception(Lang::T("Devices Not Found"));
+                    new Exception(Lang::T("Devices Not Found"));
                 }
             }
             r2(getUrl('services/vpn'), 's', Lang::T('Data Updated Successfully'));

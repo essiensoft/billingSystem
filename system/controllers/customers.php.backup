@@ -257,7 +257,7 @@ switch ($action) {
                         require_once $dvc;
                         (new $p['device'])->remove_customer($c, $p);
                     } else {
-                        throw new Exception(Lang::T("Devices Not Found"));
+                        new Exception(Lang::T("Devices Not Found"));
                     }
                 }
                 $b->status = 'off';
@@ -295,7 +295,7 @@ switch ($action) {
                                 (new $p['device'])->add_customer($c, $p);
                             }
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                 }
@@ -440,7 +440,7 @@ switch ($action) {
                             $p['plan_expired'] = 0;
                             (new $p['device'])->remove_customer($c, $p);
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                 }
@@ -812,7 +812,7 @@ switch ($action) {
                                 }
                                 (new $p['device'])->add_customer($c, $p);
                             } else {
-                                throw new Exception(Lang::T("Devices Not Found"));
+                                new Exception(Lang::T("Devices Not Found"));
                             }
                         }
                     }

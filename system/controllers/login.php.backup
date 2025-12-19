@@ -98,7 +98,7 @@ switch ($do) {
                                 ];
                                 (new $p['device'])->add_customer($c, $p);
                             } else {
-                                throw new Exception(Lang::T("Devices Not Found"));
+                                new Exception(Lang::T("Devices Not Found"));
                             }
                             if (!empty($config['voucher_redirect'])) {
                                 r2($config['voucher_redirect'], 's', Lang::T("Voucher activation success, now you can login"));
@@ -106,7 +106,7 @@ switch ($do) {
                                 r2(getUrl('login'), 's', Lang::T("Voucher activation success, now you can login"));
                             }
                         } else {
-                            throw new Exception(Lang::T("Devices Not Found"));
+                            new Exception(Lang::T("Devices Not Found"));
                         }
                     }
                     if (!empty($config['voucher_redirect'])) {
@@ -144,7 +144,7 @@ switch ($do) {
                                             ];
                                             (new $p['device'])->add_customer($c, $p);
                                         } else {
-                                            throw new Exception(Lang::T("Devices Not Found"));
+                                            new Exception(Lang::T("Devices Not Found"));
                                         }
                                         if (!empty($config['voucher_redirect'])) {
                                             r2($config['voucher_redirect'], 's', Lang::T("Voucher activation success, now you can login"));
@@ -152,7 +152,7 @@ switch ($do) {
                                             r2(getUrl('login'), 's', Lang::T("Voucher activation success, now you can login"));
                                         }
                                     } else {
-                                        throw new Exception(Lang::T("Devices Not Found"));
+                                        new Exception(Lang::T("Devices Not Found"));
                                     }
                                 }
                                 if (!empty($config['voucher_redirect'])) {
@@ -228,7 +228,7 @@ switch ($do) {
                                             r2(getUrl('login'), 's', Lang::T("Voucher activation success, now you can login"));
                                         }
                                     } else {
-                                        throw new Exception(Lang::T("Devices Not Found"));
+                                        new Exception(Lang::T("Devices Not Found"));
                                     }
                                 }
                                 if (!empty($config['voucher_redirect'])) {
@@ -276,7 +276,7 @@ switch ($do) {
                                             r2(getUrl('login'), 's', Lang::T("Voucher activation success, now you can login"));
                                         }
                                     } else {
-                                        throw new Exception(Lang::T("Devices Not Found"));
+                                        new Exception(Lang::T("Devices Not Found"));
                                     }
                                 }
                                 if (!empty($config['voucher_redirect'])) {
