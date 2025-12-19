@@ -99,6 +99,12 @@ if (_post('send') == 'balance') {
 
 // Sync plan to router
 if (isset($_GET['sync']) && !empty($_GET['sync'])) {
+    // Get user's active recharges
+    $_bill = ORM::for_table('tbl_user_recharges')
+        ->where('customer_id', $user['id'])
+        ->find_many();
+    
+    $log = '';
     foreach ($_bill as $tur) {
         if ($tur['status'] == 'on') {
             $p = ORM::for_table('tbl_plans')->findOne($tur['plan_id']);
@@ -118,7 +124,7 @@ if (isset($_GET['sync']) && !empty($_GET['sync'])) {
                             throw new Exception(Lang::T("Devices Not Found"));
                         }
                     }
-                    $log .= "DONE : $ptur[namebp], $tur[type], $tur[routers]<br>";
+                    $log .= "DONE : $tur[namebp], $tur[type], $tur[routers]<br>";
                 } else {
                     $log .= "Customer NOT FOUND : $tur[namebp], $tur[type], $tur[routers]<br>";
                 }
