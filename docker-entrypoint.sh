@@ -132,6 +132,14 @@ else
     echo "Warning: RADIUS initialization script not found"
 fi
 
+# Fix MySQL TIMESTAMP errors (invalid '0' values)
+echo "Checking for TIMESTAMP errors..."
+if [ -f /var/www/html/scripts/fix-timestamp-errors.sh ]; then
+    bash /var/www/html/scripts/fix-timestamp-errors.sh || echo "Note: TIMESTAMP fix skipped (database may not be ready yet)"
+else
+    echo "Note: TIMESTAMP fix script not found"
+fi
+
 
 # Copy default upload files if they don't exist (fixes Docker volume override)
 echo "Checking default upload files..."
